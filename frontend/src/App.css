@@ -1,9 +1,33 @@
+
+
+
+body {
+  background: #D2B48C ;
+  /*background: linear-gradient(35deg, #667eea 30%, #764ba2 100%);  /*Gradient */
+  justify-content: center;
+}
+
 .app {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
 }
+
+.card img {
+  width: 200px;
+  height: 300px;
+  border-radius: 50%;  /* Makes it a circle */
+  object-fit: cover;   /* Ensures image fills the circle */
+  margin-bottom: 1rem;
+
+  /* Picture frame effect */
+  border: 8px solid #8b6914;  /* Gold/brown frame */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);  /* Shadow for depth */
+  padding: 4px;
+  background: rgb(255, 255, 255);  /* Inner mat */
+}
+
 
 .card {
   background: #770202;
@@ -21,7 +45,7 @@
 }
 
 
- \\Doesnt work 
+ /* Personalized message doesnt work to change the actual color  */
 .personalizedMessage{
   font-size: 3rem;
   font-weight: bold;
@@ -53,7 +77,7 @@
   flex: 1;
   padding: 0.5rem;
   font-size: 1rem;
-  background: #11ff00;
+  background: #0181d7;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -70,7 +94,7 @@
 }
 
 .form button:hover {
-  background: #11ff00;
+  background: #cc9c0c;
 }
 
 .result {

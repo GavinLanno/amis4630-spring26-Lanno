@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import logo from './assets/20260203_162603672_iOS.png';
+
+
 
 function App() {
   const [message, setMessage] = useState<string>('');
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
@@ -76,13 +80,14 @@ function App() {
 
       {/* Original message */}
       <div className="card">
+        <img src={logo} alt="Logo" />
         <h2>Message from .NET:</h2>
         <p className="message">{message}</p>
       </div>
 
       {/* Interactive form */}
       <div className="card">
-        <h2>Get Personalized Greeting:</h2>
+        <h2>Request Personalized Greeting:</h2>
         <div className="form">
           <input
             type="text"
@@ -105,7 +110,7 @@ function App() {
 
       {/* Interactive form */}
       <div className="card">
-        <h2>Get Personalized Farewell:</h2>
+        <h2>Request Personalized Farewell:</h2>
         <div className="form">
           <input
             type="text"
@@ -125,6 +130,8 @@ function App() {
           </div>
         )}
       </div>
+
+
 
 
     </div>

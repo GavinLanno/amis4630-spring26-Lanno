@@ -34,3 +34,4 @@ C:\development\amis\workshop-4-lab\backend\HelloWorldApi\obj\Debug\net10.0\ref\H
 C:\development\amis\workshop-4-lab\backend\HelloWorldAPI\bin\Debug\net10.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\development\amis\workshop-4-lab\backend\HelloWorldAPI\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\development\amis\workshop-4-lab\backend\HelloWorldAPI\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\development\amis\workshop-4-lab\backend\HelloWorldApi\obj\Debug\net10.0\HelloWorldApi.sourcelink.json
