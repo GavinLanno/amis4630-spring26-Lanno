@@ -127,6 +127,9 @@ function App() {
         {personalizedGoodbye && (
           <div className="result">
             <p className="message">{personalizedGoodbye}</p>
+            <a href="https://copilot.com" target="_blank" rel="noopener noreferrer">
+              Visit Copilot
+            </a>
           </div>
         )}
       </div>

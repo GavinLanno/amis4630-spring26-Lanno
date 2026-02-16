@@ -30,10 +30,13 @@ if (app.Environment.IsDevelopment())
     // ⭐ ADD THESE LINEs
     app.UseSwaggerUI();
     
+    //I had to delete some given code for it to work
 }
 
 app.UseHttpsRedirection();
 
+
+//Enables cross-origin Resource Sharing
 app.UseCors("AllowReact");
 
 app.UseAuthorization();

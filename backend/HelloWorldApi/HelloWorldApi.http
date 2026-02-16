@@ -4,4 +4,7 @@ GET {{HelloWorldApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ### Get Hello Message
-GET https://localhost:5000/api/Hello
+GET http://localhost:5000/api/Hello
+
+### Get Hello Message
+GET https://localhost:7000/api/Hello 

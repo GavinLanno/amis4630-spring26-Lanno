@@ -3,7 +3,7 @@
 
 body {
   background: #D2B48C ;
-  /*background: linear-gradient(35deg, #667eea 30%, #764ba2 100%);  /*Gradient */
+  background: linear-gradient(1deg, #667eea 30%, #764ba2 100%);  /*Gradient */
   justify-content: center;
 }
 
@@ -68,7 +68,7 @@ body {
   flex: 1;
   padding: 0.5rem;
   font-size: 1rem;
-  background: #51bfee;
+  background: #ffffff;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -77,7 +77,7 @@ body {
   flex: 1;
   padding: 0.5rem;
   font-size: 1rem;
-  background: #0181d7;
+  background: #aaabac;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
