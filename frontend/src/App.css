@@ -1,106 +1,416 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Lato:wght@300;400;700&display=swap');
 
+/* ── CSS Variables ── */
+:root {
+  --cream:       #f9f5f0;
+  --warm-white:  #ffffff;
+  --stone:       #e8e0d5;
+  --tan:         #c9b99a;
+  --brown:       #9a8778;
+  --dark:        #2c2420;
+  --accent:      #b05c2e;
+  --accent-hover:#8f4820;
+  --text-main:   #2c2420;
+  --text-muted:  #7a6e67;
+  --radius:      12px;
+  --shadow:      0 4px 20px rgba(44, 36, 32, 0.10);
+  --shadow-hover:0 8px 32px rgba(44, 36, 32, 0.18);
+}
 
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #D2B48C ;
-  background: linear-gradient(1deg, #667eea 30%, #764ba2 100%);  /*Gradient */
-  justify-content: center;
+  font-family: 'Lato', sans-serif;
+  background-color: var(--cream);
+  color: var(--text-main);
+  line-height: 1.6;
 }
 
-.app {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.card img {
-  width: 200px;
-  height: 300px;
-  border-radius: 50%;  /* Makes it a circle */
-  object-fit: cover;   /* Ensures image fills the circle */
-  margin-bottom: 1rem;
-
-  /* Picture frame effect */
-  border: 8px solid #8b6914;  /* Gold/brown frame */
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);  /* Shadow for depth */
-  padding: 4px;
-  background: rgb(255, 255, 255);  /* Inner mat */
-}
-
-
-.card {
-  background: #770202;
-  border: 3px solid #ddd;
-  border-radius: 8px;
-  padding: 2rem;
-  margin: 2rem 0;
-}
-
-.message {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #7cb5fb;
-  margin: 1rem 0;
-}
-
-
- /* Personalized message doesnt work to change the actual color  */
-.personalizedMessage{
-  font-size: 3rem;
-  font-weight: bold;
-  color: #2100fb;
-  margin: 1rem 0;
-}
-
-.error {
-  color: #dc2626;
-  font-weight: bold;
-}
-
-.form {
+/* ── Status Screens ── */
+.status-screen {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+.status-screen.error { color: var(--accent); }
+
+/* ── App Shell ── */
+.app {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Navbar ── */
+.navbar {
+  background-color: var(--dark);
+  padding: 0 2rem;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.navbar-logo {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+.navbar-logo-icon {
+  font-size: 1.6rem;
+  color: var(--tan);
+}
+.navbar-logo-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--warm-white);
+  letter-spacing: 0.02em;
+}
+.navbar-tagline {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--tan);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Main Content ── */
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  box-sizing: border-box;
+}
+
+/* ── Page Header ── */
+.page-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--stone);
+  padding-bottom: 1.25rem;
+}
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ── Listing Grid ── */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+}
+
+.no-results {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem;
+}
+
+/* ── Listing Card ── */
+.listing-card {
+  background: var(--warm-white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--stone);
+}
+.listing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.listing-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  background: var(--stone);
+}
+.listing-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+  display: block;
+}
+.listing-card:hover .listing-card-image {
+  transform: scale(1.04);
+}
+.listing-card-category {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--dark);
+  color: var(--tan);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+
+.listing-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.listing-card-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.listing-card-address {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.4;
+}
+.listing-card-description {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  margin-top: 0.25rem;
+}
+.listing-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--stone);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  gap: 0.5rem;
+}
+.listing-card-seller {
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.listing-card-date {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.form input {
-  flex: 1;
-  padding: 0.5rem;
-  font-size: 1rem;
-  background: #ffffff;
-  border: 1px solid #ddd;
+/* ── Listing Detail ── */
+.listing-detail {
+  max-width: 860px;
+  margin: 0 auto;
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.back-button {
+  background: none;
+  border: 1px solid var(--stone);
+  color: var(--text-muted);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.88rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+.back-button:hover {
+  background: var(--stone);
+  color: var(--dark);
+}
+
+.detail-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+.detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.detail-category {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: var(--dark);
+  color: var(--tan);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px;
   border-radius: 4px;
 }
 
-.form input:focus {
-  flex: 1;
-  padding: 0.5rem;
-  font-size: 1rem;
-  background: #aaabac;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--stone);
+}
+.detail-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.detail-address {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
 }
 
+.detail-description {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
 
-.form button {
-  padding: 0.5rem 1.5rem;
-  font-size: 1rem;
-  background: #e2b93e;
+.detail-meta {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  background: var(--stone);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+}
+.detail-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.detail-meta-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brown);
+}
+.detail-meta-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.contact-button {
+  align-self: flex-start;
+  background: var(--accent);
   color: white;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.form button:hover {
-  background: #cc9c0c;
-}
-
-.result {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgb(255, 168, 226);
-  border: 3px solid #ddd;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 2rem;
   border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.contact-button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 5rem 2rem;
+  color: var(--text-muted);
+}
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+.empty-state-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+}
+.empty-state-message {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ── Not Found ── */
+.not-found {
+  text-align: center;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.not-found h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.75rem;
+  color: var(--dark);
+}
+.not-found p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .navbar-tagline { display: none; }
+  .listing-grid { grid-template-columns: 1fr; }
+  .detail-image-wrapper { height: 220px; }
+  .detail-price { font-size: 1.6rem; }
 }

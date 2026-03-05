@@ -33,6 +33,8 @@ if (app.Environment.IsDevelopment())
     //I had to delete some given code for it to work
 }
 
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
 
 
