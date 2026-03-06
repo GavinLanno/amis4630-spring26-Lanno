@@ -37,46 +37,51 @@ In order for a buyer to pick a listing, listings must exist first, which is why 
 
 ```
 Users (Browser)
-        |
-        | HTTPS
-        v
-+---------------------------+
-| Frontend (React)          |
-| - UI / routing            |
-| - Calls APIs (REST)       |
-| - Admin views (role-based)|
-+---------------------------+
-        |
-        | HTTPS (JSON) + Authorization: Bearer <JWT>
-        v
+         |
+         | HTTPS
+         v
++----------------------------------+
+| Frontend (React) — port 5173    |
+|  - Vite dev server              |
+|  - React components + hooks     |
+|  - React Router (client-side)   |
+|  - Fetches REST API (JSON)      |
++----------------------------------+
+         |
+         | HTTPS (JSON) — GET /api/listings
+         | CORS header required (cross-origin)
+         v
 +-----------------------------------+
-| Backend API (ASP.NET)             |
-| - Auth (JWT validation)           |
-| - Controllers / endpoints         |
-| - Business logic                  |
-| - Data access (EF Core / SQL)     |
-| - Stores file URLs/metadata       |
+| Backend API (ASP.NET) — port 7000 |
+|  - ListingsController             |
+|    GET /api/listings → 200 + JSON |
+|    GET /api/listings/{id} → 200   |
+|                           or 404  |
+|  - Business logic layer           |
+|  - Static file serving (wwwroot)  |
 +-----------------------------------+
-        |
-        | SQL connection
-        v
-+---------------------------+
-| Database (SQL)            |
-| - Users, posts, logs      |
-| - Constraints, indexes    |
-+---------------------------+
+       |                      |
+       | SQL connection(TBD)  | Static files
+       v                      v
++----------------+  +----------------------+
+| Database (SQL) |  | wwwroot/images/      |
+| - Users        |  | listings/            |
+| - Listings     |  | served at:           |
+| - Constraints  |  | /images/listings/    |
++----------------+  +----------------------+
 ```
 
 **Data Flow**
 
-Frontend ←→ Backend
+Frontend ↔ Backend — Request Lifecycle
 
-1. User action triggers frontend interaction  
-2. Frontend sends HTTP request (JSON)  
-3. Backend validates JWT and executes logic  
-4. Backend queries database  
-5. Backend returns JSON response  
-6. Frontend updates UI  
+1. User loads the app → React mounts and App.tsx calls fetch("https://localhost:7000/api/listings")
+2. Browser checks CORS — request is cross-origin (port 5173 → 7000), so ASP.NET must respond with the correct Access-Control-Allow-Origin header via the "AllowReact" policy
+3. ListingsController receives the request and returns the full listings array as JSON with a 200 OK
+4. React stores the response in state and passes the listings array down as props to ListingsPage and ListingDetailPage
+5. User clicks a listing card → useNavigate() pushes /listings/{id} to the browser history — no new network request is made
+6. ListingDetailPage reads the id via useParams() and finds the matching listing from the already-fetched props array
+7. React re-renders the UI with the detail view — all from local state, no second API call needed
 
 ---
 
@@ -98,18 +103,39 @@ The backend validates the token to **authenticate and authorize the user** befor
 
 ### ERD Relationships
 
+
+## Database Schema Design
+
+### Entity Relationships
+
+| Entity | Relationship | Entity | Description |
+|--------|-------------|--------|-------------|
+| USER | has exactly one | PROFILE | Every user has one profile for identity and trust context |
+| USER | posts many | LISTING | A user can create multiple sublease listings |
+| PROPERTY | has many | LISTING | A building can have multiple units listed simultaneously |
+| LISTING | has many | LISTING_IMAGE | Each listing supports a photo gallery |
+| USER | saves many | SAVED_LISTING | Buyers can bookmark listings they're interested in |
+| USER | views many | LISTING_VIEW | Tracks which listings a user has seen |
+| USER | sends many | INQUIRY | Buyers can message sellers about a listing |
+| LISTING | receives many | INQUIRY | A listing can receive messages from multiple buyers |
+
+### ERD Diagram
+```mermaid
+erDiagram
+    USER ||--|| PROFILE : has
+    USER ||--o{ LISTING : posted_by
+    PROPERTY ||--o{ LISTING : located_at
+    LISTING ||--o{ LISTING_IMAGE : has
+    USER ||--o{ SAVED_LISTING : saves
+    LISTING ||--o{ SAVED_LISTING : is_saved
+    USER ||--o{ LISTING_VIEW : views
+    LISTING ||--o{ LISTING_VIEW : is_viewed
+    USER ||--o{ INQUIRY : sends
+    LISTING ||--o{ INQUIRY : receives
 ```
-USER ||--|| PROFILE : has
-USER ||--o{ LISTING : posted_by
-PROPERTY ||--o{ LISTING : located_at
-LISTING ||--o{ LISTING_IMAGE : has
-USER ||--o{ SAVED_LISTING : saves
-LISTING ||--o{ SAVED_LISTING : is_saved
-USER ||--o{ LISTING_VIEW : views
-LISTING ||--o{ LISTING_VIEW : is_viewed
-USER ||--o{ INQUIRY : sends
-LISTING ||--o{ INQUIRY : receives
-```
+
+
+
 
 ---
 
@@ -149,29 +175,29 @@ LISTING ||--o{ INQUIRY : receives
 
 ### ADR 1 — Frontend
 
+**Context:** I need a frontend application to build a component based housing marketplace with Typescript, page routing support, and widely used in the industry.
+
+**Options Considered:** Angular is typically used for large-scale enterprices applications, is less flexible, and has a harder learning curve than react.  Vue is more traditional focusing on HTML, and has a smaller and niche community.
+
 **Decision:** React with TypeScript
 
-**Reasoning**
+**Reasoning:** React has highly reuseable UI componenets (listing cards, profiles), is widely used, open-sourced, and backed by Meta. It also has an easy learning curve.
 
-- Reusable UI components (listing cards, profiles)
-- Widely used industry standard
-- Open-source and maintained by Meta
-- Easy to learn
+**Consequences:**  React has less built-in features than angular, and the archetecture is less structured which could make it slightly more difficult to manage a larger variety of files.
 
 ---
 
 ### ADR 2 — Backend
 
+**Context:** I need a backend application that connects to react, is widely used in the industry, can be integrated into azure, can serve REST API endpoints, and can be applied to a varitey of different application types (Websites, business dashboards, complex calculations, etc)
+
+**Options Considered:** Django uses python which is interpreted and dynamically typed, it slows down at a larger scale, and it has a steep learning curve.
+
 **Decision:** ASP.NET with C#
 
-**Reasoning**
+**Reasoning** ASP.Net uses C# which helps catch errors during complie time, its flexible across application types, it has built in database access, maintained by Microsoft, widely used in the industry, and smoothly integrates with Azure.
 
-- Flexible across application types
-- Compile-time error detection
-- Built-in database access
-- Open-source and maintained by Microsoft
-- Enterprise-grade
-- Smooth Azure integration
+**Consequences:** ASP.Net has a heavier setup time than other alternatives, however C# reduces runtime errors and the structured project conventions make the codebase easier to navigate as it grows.
 
 ---
 
@@ -279,10 +305,6 @@ Yes please
 - `Listing.ts` type file mirroring the C# model
 - React Router setup
 - Empty state handling
-
-### What Was Modified
-
-- Prefixed image sources with `https://localhost:7000` after understanding static file serving.
 
 ### Personal Judgment
 
