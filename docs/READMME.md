@@ -1,39 +1,39 @@
+# Milestone 3: Full-Stack Integration
 
-
-<h1>Milestone 2: Architecture Design & Frontend Foundation</h1>
-
-Gavin Lanno  |   February 15<sup>th</sup>  |  [`Github Repository Link`](https://github.com/GavinLanno/amis4630-spring26-Lanno) <br>
-SDLC Phase: Design <br> <br>
-
-
-
-<h2>🏘️Buckeye Sublease</h2>
-
-Buckeye Sublease is a two-sided digital marketplace that connects students and landlords seeking to list leases or subleases with individuals searching for short-term or flexible housing. The platform allows users to create detailed property listings that include pricing, availability, location, housing type, and photos. Users also create profiles to evaluate compatibility and credibility, enabling both housing search and roommate discovery within a single system. The platform supports apartments, duplexes, quadplexes, and houses, and facilitates efficient matching, listing management, and communication between parties. <br>
+**Gavin Lanno** | March 2026 | GitHub Repository  
+**SDLC Phase:** Implementation
 
 ---
 
-<h2>📋Document Layout</h2>
+# 🏘️ Buckeye Sublease
 
-    1. Kanban and Prioritization
-    2. Systems Architecture Diagram
-    3. Database Schema Design 
-    4. Archetecture Design Records 
-    5. Component Architecture
-    6. Prompts
+Buckeye Sublease is a two-sided digital marketplace that connects students and landlords seeking to list leases or subleases with individuals searching for short-term or flexible housing.
+
+This milestone focused on building out the **full-stack integration between the React frontend and the ASP.NET backend API.**
 
 ---
 
-<h2>📅GitHub Kanban and Prioritization </h2>
+# 📋 Document Layout
 
-- Synced issues in amis4630 repository to the kanban project <br>
-- Prioritized items based on the MVP for persona Ethan Collins, who is making a sublease listing.  In order for a buyer to pick a listing there needs to be listings already which is why I started with the seller persona. <br>
-- Github Project [`Kanban and Prioritization`](https://github.com/users/GavinLanno/projects/1) <br>
--	Synced issues in amis4630 repository to the kanban project <br>
+1. Kanban and Prioritization  
+2. Systems Architecture Diagram  
+3. Database Schema Design  
+4. Architecture Decision Records  
+5. Component Architecture  
+6. AI Tool Usage  
 
 ---
 
-<h2>⚙️Systems Architecture Diagram</h2>
+# 📅 GitHub Kanban and Prioritization
+
+- Synced issues in the `amis4630` repository to the Kanban project.
+- Prioritized items based on the **MVP for persona Ethan Collins**, who is making a sublease listing.
+
+In order for a buyer to pick a listing, listings must exist first, which is why development began with the **seller persona**.
+
+---
+
+# ⚙️ Systems Architecture Diagram
 
 ```
 Users (Browser)
@@ -58,7 +58,7 @@ Users (Browser)
 | - Stores file URLs/metadata       |
 +-----------------------------------+
         |
-        | SQL connection (conn string / managed identity)
+        | SQL connection
         v
 +---------------------------+
 | Database (SQL)            |
@@ -67,182 +67,279 @@ Users (Browser)
 +---------------------------+
 ```
 
-<h3>Frontend <---> Backend</h3>
-User action → Frontend sends HTTP request (JSON) → Backend validates JWT + executes logic →
-Backend queries DB → Backend returns JSON → Frontend updates UI. <br> <br>
+**Data Flow**
 
-<h3>🛠️How it works</h3>
-The frontend includes a JWT (JSON Web Token) in the Authorization header of API requests. The JWT contains a header (signing algorithm), payload (user claims such as ID and role), and signature. The backend validates the token to authenticate and authorize the user before executing business logic and querying the database. <br>
+Frontend ←→ Backend
 
----
-
-<h2>🫙Database Schema Design</h2>
-
-```
-ERDiagram
-  USER ||--|| PROFILE : has
-  USER ||--o{ LISTING : posted_by
- 
-  PROPERTY ||--o{ LISTING : located_at
-  LISTING ||--o{ LISTING_IMAGE : has
-
-  USER ||--o{ SAVED_LISTING : saves
-  LISTING ||--o{ SAVED_LISTING : is_saved
-
-  USER ||--o{ LISTING_VIEW : views
-  LISTING ||--o{ LISTING_VIEW : is_viewed
-
-  USER ||--o{ INQUIRY : sends
-  LISTING ||--o{ INQUIRY : receives
-
-  Key
-    || = exactly one
-    o{ = zero or many
-    |{ = one or many
-    }o = zero or many (reverse side)
-    -- = relationship line
-
-    : has = label describing the relationship
-```
-
-<h3>📚How ERD Supports User Stories</h3>
-
-- Account + identity: A User has exactly one Profile, enabling user details and trust context.
-- Posting listings: A User can post many listings, supporting sellers/leaseholders creating postings.
-- Location association: A Property can have many Listings, supporting relisting or multiple units at the same address.
-- Listing media: A listing can have many images, supporting photo galleries.
-- Buyer behavior: Users can save listings and view listings through junction tables (SavedListing, ListingView).
-- Buyer–seller communication: Users can send inquiries on listings through the Inquiry relationship (User ↔ Listing), supporting initial contact and lead tracking.
+1. User action triggers frontend interaction  
+2. Frontend sends HTTP request (JSON)  
+3. Backend validates JWT and executes logic  
+4. Backend queries database  
+5. Backend returns JSON response  
+6. Frontend updates UI  
 
 ---
 
-<h2>💽Architecture Decision Records</h3>
+# 🛠️ How It Works
 
-<h3>💻Technology Used</h3>
+The frontend includes a **JWT (JSON Web Token)** in the `Authorization` header of API requests.
 
-*ADR 1* — Frontend <br>
-Decision: React w/ TypeScipt <br>
-Reasoning: <br>
-- Allows easy build-up of UIs from `reusable components` (Ex. Listing cards and profiles)
-- Universally used and `industry standard`
-- `Open sourced` and `maintained` by Meta
+The JWT contains:
+
+- **Header** — signing algorithm  
+- **Payload** — user claims (user ID, role)  
+- **Signature** — verifies token authenticity  
+
+The backend validates the token to **authenticate and authorize the user** before executing business logic and querying the database.
+
+---
+
+# 🫙 Database Schema Design
+
+### ERD Relationships
+
+```
+USER ||--|| PROFILE : has
+USER ||--o{ LISTING : posted_by
+PROPERTY ||--o{ LISTING : located_at
+LISTING ||--o{ LISTING_IMAGE : has
+USER ||--o{ SAVED_LISTING : saves
+LISTING ||--o{ SAVED_LISTING : is_saved
+USER ||--o{ LISTING_VIEW : views
+LISTING ||--o{ LISTING_VIEW : is_viewed
+USER ||--o{ INQUIRY : sends
+LISTING ||--o{ INQUIRY : receives
+```
+
+---
+
+# 📚 How ERD Supports User Stories
+
+**Account + Identity**
+
+- A `User` has exactly one `Profile`, enabling user details and trust context.
+
+**Posting Listings**
+
+- A `User` can post many listings, supporting leaseholders creating postings.
+
+**Location Association**
+
+- A `Property` can have many listings, allowing relisting or multiple units at one address.
+
+**Listing Media**
+
+- A listing can have many images, enabling photo galleries.
+
+**Buyer Behavior**
+
+- Users can save listings and view listings via junction tables:
+  - `SavedListing`
+  - `ListingView`
+
+**Buyer–Seller Communication**
+
+- Users can send inquiries on listings through the `Inquiry` relationship.
+
+---
+
+# 💽 Architecture Decision Records
+
+## 💻 Technology Used
+
+### ADR 1 — Frontend
+
+**Decision:** React with TypeScript
+
+**Reasoning**
+
+- Reusable UI components (listing cards, profiles)
+- Widely used industry standard
+- Open-source and maintained by Meta
 - Easy to learn
-<br>
 
-*ADR 2* — Backend <br>
-Decision: ASP.NET w/ C# <br>
-Reasoning: <br>
-- Can be applied to various application purposes (Ex. Gaming and busines)
-- C# catches errors at compile time opposed to run time
+---
+
+### ADR 2 — Backend
+
+**Decision:** ASP.NET with C#
+
+**Reasoning**
+
+- Flexible across application types
+- Compile-time error detection
 - Built-in database access
-- Open sourced and maintained by Microsoft
-- Enterprise-Grade
+- Open-source and maintained by Microsoft
+- Enterprise-grade
 - Smooth Azure integration
-<br>
 
-<h3>🤖Prompt Documentation</h3>    
-AI's used: ChatGPT <br>
-
-```
-Systems Architecture Diagram
-
-Prompt: Can you make a High-level system architecture showing major components (frontend, backend, database) and how they interact.
-    Note: Chat GPT remembers helping me on previous assignments
-
-Prompt: This is my finished work, what are your thoughts {Diagram and explainations}
-
-Prompt:
-    Sweet I took your feedback and wrote this
-    <h3>Frontend <---> Backend</h3>
-    User action → Frontend sends HTTP request (JSON) → Backend validates JWT + executes logic →
-    Backend queries DB → Backend returns JSON → Frontend updates UI. <br> <br>
-    
-    <h3>🛠️How it works</h3>
-    The frontend connects the the backend using a JWT (JSON Web Tokens), which includes its encoding type(head),
-    the queries (payload), and the signature to verify the sender. <br>
-
-```
----
-```
-Entity Relationship Diagram
-
-Prompt:
-    Now I need to make a Database Schema Design, using these instructions: {Assignment instructions}
-    Here is my brainstorm:
-    A user can make many listings
-    A user can view many listing A user can Manage multiple listings
-    A user can manage a profile (image, name, etc)
-    A listing has One-many images
-    A listing has one address
-    A listing has one subleaser (one who posted listing)
-    A user can message multiple users
-    A profile can only have 1 pfp
-    One address can have multiple posts (Multiple rooms per house or apt complex)
-
-    The schema supports the user story by allowing listings to have consistent
-    and predictable information as well as letting them create a listing.
-
-    Can you double check these entities? What others entities can be included or that I am missing?
-
-Prompt(New Chat):
-    Can you make a ERD using Mermaid format with the following instructions {Assignment instructions}
-    Below is the information I would like you to use
-    Minimal ERD
-        Entities
-            User, Profile, Listing, Property, ListingImage, SavedListings
-        Relationship mappings (what you’ll put on the ERD)
-            User 1 → many Listing (posted_by)
-            Property 1 → many Listing
-            Listing 1 → many ListingImage
-            User 1 → 1 Profile
-            User many ↔ many Listing (SavedListing)
-            User many ↔ many Listing (ListingView)
-            User many ↔ many Listing (Inquiry)
-    
-Prompt: Do you think my professor will understand that, he knows I wont. I want to be honest and understand.
-
-Prompt: Are there any other relationships that should be added?
-
-Prompt:
-    What are your thoughts on this explaination of my erdiagram on my user stories
-    <h3>📚How ERD Supports User Stories</h3>
-    This ERD
-    - Allows 1 user to have exactly 1 profile
-    - Allows 1 user to post many lisitngs
-    - Allows properties to have multiple listings
-    - Allows users to communicate a match
-
-    The MVP for all user stories is having an application where they can create an account,
-    a listing, and communicate with a buyer. This ERD allows the users to create
-    accounts allowing lisitng privliages and buyer-seller communication.
-```
 ---
 
-<h2>📦Component Architecture</h2>
-This section decompartmentalizes the property listing log using *Atomic Design Methodology* <br> <br>
+# 📦 Component Architecture
 
-***Atoms*** <br>
-- Button
-- Input
-- Image
-- Text
-- icon
-<br>
+This section decomposes the property listing UI using **Atomic Design Methodology**.
 
-***Molecules*** <br>
-- Search Bar
-- Price display
-- Location display
-- Profile info display
-<br>
+## Atoms
 
-***Organisms*** <br>
-- Listing component/card
-- Filter side bar
-- Listing grid
-- Infinite scroll trigger
-<br>
+- Button  
+- Input  
+- Image  
+- Text  
+- Icon  
 
-***Templates*** <br>
-- Lisitng catalog grid Template
-- Listing catolog map Template
+## Molecules
+
+- Search Bar  
+- Price display  
+- Location display  
+- Profile info display  
+
+## Organisms
+
+- Listing component / card  
+- Filter sidebar  
+- Listing grid  
+- Infinite scroll trigger  
+
+## Templates
+
+- Listing catalog grid template  
+- Listing catalog map template  
+
+---
+
+# 🤖 AI Tool Usage
+
+**AI Tool Used:** Claude (claude.ai)
+
+This milestone involved AI assistance for scaffolding the full-stack integration.
+
+Below is a summary of what AI helped with, what was modified, and where personal judgment was applied.
+
+---
+
+# Backend Assistance
+
+### Help Requested
+
+- Verification that `ListingsController` met assignment requirements:
+  - Two endpoints
+  - In-memory data
+  - 404 handling
+  - CORS
+- Static file serving for images stored in `wwwroot`
+- Whether `DateTime` is valid for `PostedDate`
+
+### Prompts Used
+
+```
+Here are my backend files [ListingStore.cs, Listing.cs, ListingsController.cs, Program.cs] — can you verify these requirements are met?
+
+I'm saving my images in my backend wwwroot folder — does that change how the frontend receives it?
+
+My static data has ImageURL = './wwwroot/images/...' — do I need the entire file path?
+```
+
+### What Was Accepted
+
+- Confirmation controller structure was correct
+- Explanation of how `wwwroot` is removed from the URL
+- Adding `app.UseStaticFiles()` to `Program.cs`
+
+### Personal Judgment
+
+- Maintained **ListingsController naming** instead of ProductsController to match the real estate domain.
+
+---
+
+# Frontend Assistance
+
+### Help Requested
+
+- How to split a monolithic `App.tsx` into reusable components
+- Component scaffolding
+- React Router setup
+- Empty state UI
+
+### Prompts Used
+
+```
+Currently I have my App.tsx and App.css with everything in it — how should I break it up to promote reusability?
+
+Let's do it!
+
+Can you verify that all of these requirements are met?
+
+Yes please
+```
+
+### What Was Accepted
+
+- `pages/` + `components/` folder structure
+- `Listing.ts` type file mirroring the C# model
+- React Router setup
+- Empty state handling
+
+### What Was Modified
+
+- Prefixed image sources with `https://localhost:7000` after understanding static file serving.
+
+### Personal Judgment
+
+- Maintained domain-specific component names:
+  - `ListingCard`
+  - `ListingDetail`
+- Kept data fetch in `App.tsx` to avoid redundant network calls.
+
+---
+
+# Independent Decisions
+
+- Renamed marketplace entities to match **Buckeye Sublease domain**
+- Reviewed all scaffolded code before accepting
+- Corrected image path logic after understanding `UseStaticFiles`
+- Verified correct `.NET port` in `launchSettings.json`
+
+---
+
+# 🤖 Previous Milestone AI Usage (ChatGPT)
+
+### Systems Architecture Diagram
+
+Prompt:
+
+```
+Can you make a high-level system architecture showing major components
+(frontend, backend, database) and how they interact.
+```
+
+Follow-up:
+
+```
+This is my finished work, what are your thoughts?
+```
+
+---
+
+### Entity Relationship Diagram
+
+Prompts:
+
+```
+Now I need to make a Database Schema Design using these instructions.
+Here is my brainstorm: [relationships list]. Can you double check these entities?
+```
+
+```
+Can you make an ERD using Mermaid format with the following:
+[entities and relationships]
+```
+
+```
+Do you think my professor will understand that?
+I want to be honest and understand it myself.
+```
+
+---
+
+# End of Document
