@@ -17,7 +17,7 @@ public class ListingsController : ControllerBase
     [HttpGet("{id:int}")]
     public ActionResult<Listing> GetListingById(int id)
     {
-        var listing = ListingStore.Listings.FirstOrDefault(p => p.Id == id);  //I moved the data into ../Data/ListingStore.cs  (I figured it would be cleaner)
+        var listing = ListingStore.Listings.FirstOrDefault(p => p.Id == id);  
 
         if (listing is null)
         {

@@ -1,10 +1,10 @@
-@HelloWorldApi_HostAddress = http://localhost:5219
+@HelloWorldApi_HostAddress = https://localhost:7000
 
 GET {{HelloWorldApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ### Get Hello Message
-GET http://localhost:5000/api/Hello
+GET http://localhost:5000/api/Listings
 
 ### Get Hello Message
-GET https://localhost:7000/api/Hello 
+GET https://localhost:7000/api/Listings
