@@ -23,17 +23,24 @@ Guidelines for AI coding agents working in this .NET Web API repository.
 ```
 HelloWorldApi/
 ├── Controllers/           # API controllers (one per aggregate/entity)
+│   ├── CartController.cs
 │   └── ListingsController.cs
 ├── Data/                  # DbContext and seed data
-│   └── ListingStore.cs
+│   └── LisitngContext.cs
 ├── wwwroot/images/listings # Holds images for listings
 │   ├── individual photo files
 ├── DTOs/                  # Request/response records
-│   ├── CreateListingRequest.cs
-│   └── ListingResponse.cs
+│   ├── AddToCartDto.cs
+│   ├── CartDto.cs
+│   ├── CartItemDtos.cs
+│   ├── ListingDto.cs
+│   └── UpdateCartItemsDtos.cs
 ├── Middleware/             # Cross-cutting concerns
 │   └── GlobalExceptionHandler.cs
 ├── Models/                # EF Core entity classes
+│   ├── Cart.cs
+│   ├── CartItem.cs
+│   ├── Category.cs
 │   └── Listing.cs
 ├── Program.cs             # Service registration and middleware pipeline
 ├── appsettings.json

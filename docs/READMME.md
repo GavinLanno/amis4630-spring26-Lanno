@@ -234,7 +234,79 @@ This section decomposes the property listing UI using **Atomic Design Methodolog
 
 ---
 
-# 🤖 AI Tool Usage
+# 🤖 AI Tool Usage Milestone 4
+
+**AI Tool Used:** Claude (claude.ai)
+
+This milestone involved AI assistance for scaffolding the backend data layer, models, DTOs, and controllers.
+
+---
+
+# Backend Assistance
+
+### Help Requested
+
+- Difference between a static in-memory store and an EF Core `DbContext`
+- Rewriting `ListingStore.cs` into a proper `ListingContext.cs`
+- Generating `Listing.cs`, `Category.cs`, `Cart.cs`, `CartItem.cs` models
+- Generating `ListingDto.cs`, `CartDto.cs`, `CartItemDto.cs`, `AddToCartDto.cs`, `UpdateCartItemDto.cs`
+- Updating `ListingsController.cs` to use DI, async, and DTO mapping
+- Verifying `CartController.cs` against project requirements
+- Where to register `ListingContext` in `Program.cs`
+- Whether migrations apply to an in-memory database
+
+### Prompts Used
+```
+What is the difference between these two data store files?
+Can you rewrite the second data file in the same style as the first?
+Can you write the Category.cs file that would work with this DbContext?
+Can you create both Cart.cs and CartItem.cs that would work with Listing.cs and Category.cs?
+Would this CartController.cs work with the current files you have made?
+Where in Program.cs should I insert the DbContext registration?
+If I wanted to create a migration what should I put in the terminal?
+```
+
+### What Was Accepted
+
+- `ListingContext.cs` with seeded Categories and Listings
+- All four model files
+- All five DTO files
+- Updated `ListingsController.cs` with DI, async, and DTO mapping
+- `Program.cs` registration of `ListingContext`
+
+### Personal Judgment
+
+- Kept `Category` as a string on the original `Listing.cs` until confirming a separate `Category.cs` model already existed
+- Maintained real estate domain naming (`Listing`, `Address`, `SellerName`) rather than adopting marketplace naming (`Product`, `Name`)
+- Reviewed `CartController.cs` independently before submitting rather than having AI write it from scratch
+
+---
+
+# Cart Persistence Test Scenario
+
+- Seed data lives in `ListingContext` and is recreated on every backend restart (in-memory).
+- Cart records are created dynamically at runtime for the hardcoded user.
+- Test flow:
+  1. Start backend and frontend
+  2. Add listings to the cart
+  3. Refresh the browser — cart reloads from the API
+  4. Restart the frontend — cart persists via backend
+  5. Restart the backend — cart resets (expected with in-memory DB, resolved in M5 with SQL Server)
+
+---
+
+# Independent Decisions
+
+- Reviewed all AI-generated code before accepting
+- Identified and resolved `ListingStore` build error caused by a stale controller file
+- Confirmed `DateTime` is valid for `PostedDate` without AI input
+- Decided against adding `[Required]` and `[MaxLength]` annotations to keep models consistent
+
+---
+
+
+
+# 🤖 AI Tool Usage Milestone 3
 
 **AI Tool Used:** Claude (claude.ai)
 
@@ -275,6 +347,19 @@ My static data has ImageURL = './wwwroot/images/...' — do I need the entire fi
 ### Personal Judgment
 
 - Maintained **ListingsController naming** instead of ProductsController to match the real estate domain.
+- Treated a `Listing` as the real-estate equivalent of a marketplace `Product` for rubric alignment.
+
+---
+
+# Cart Persistence Test Scenario
+
+- Seeded listing data lives in `ListingContext`, and cart records are created dynamically for the hardcoded cart user.
+- Test flow:
+  1. Start the backend and frontend.
+  2. Add one or more listings to the cart.
+  3. Refresh the browser and confirm the cart reloads from the API.
+  4. Restart the frontend and confirm the cart still loads.
+  5. Restart the backend after migrations have been applied and confirm cart rows remain in SQL Server.
 
 ---
 

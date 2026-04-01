@@ -1,6 +1,14 @@
+// ListingsController.cs - Controller
+// Handles HTTP requests for the Listings resource.
+// Injects ListingContext via dependency injection to query the database.
+// Maps Listing models to ListingDto before sending to the frontend.
+// Endpoints: GET /api/listings, GET /api/listings/{id}
+
 using HelloWorldApi.Data;
+using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HelloWorldApi.Controllers;
 
@@ -8,16 +16,52 @@ namespace HelloWorldApi.Controllers;
 [Route("api/[controller]")]
 public class ListingsController : ControllerBase
 {
-    [HttpGet]
-    public ActionResult<IEnumerable<Listing>> GetListings()
+    private readonly ListingContext _db;
+
+    public ListingsController(ListingContext db)
     {
-        return Ok(ListingStore.Listings);
+        _db = db;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ListingDto>>> GetListings()
+    {
+        var listings = await _db.Listings
+            .Include(l => l.Category)
+            .Select(l => new ListingDto
+            {
+                Id = l.Id,
+                Address = l.Address,
+                Description = l.Description,
+                Price = l.Price,
+                CategoryName = l.Category.Name,
+                SellerName = l.SellerName,
+                PostedDate = l.PostedDate,
+                ImageURL = l.ImageURL
+            })
+            .ToListAsync();
+
+        return Ok(listings);
     }
 
     [HttpGet("{id:int}")]
-    public ActionResult<Listing> GetListingById(int id)
+    public async Task<ActionResult<ListingDto>> GetListingById(int id)
     {
-        var listing = ListingStore.Listings.FirstOrDefault(p => p.Id == id);  
+        var listing = await _db.Listings
+            .Include(l => l.Category)
+            .Where(l => l.Id == id)
+            .Select(l => new ListingDto
+            {
+                Id = l.Id,
+                Address = l.Address,
+                Description = l.Description,
+                Price = l.Price,
+                CategoryName = l.Category.Name,
+                SellerName = l.SellerName,
+                PostedDate = l.PostedDate,
+                ImageURL = l.ImageURL
+            })
+            .FirstOrDefaultAsync();
 
         if (listing is null)
         {
