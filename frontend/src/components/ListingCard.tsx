@@ -1,4 +1,5 @@
 import type { Listing } from '../types/Listing';
+import { AddToCartButton } from './AddToCartButton/AddToCartButton';
 import '../App.css';
 
 interface ListingCardProps {
@@ -26,8 +27,8 @@ function ListingCard({ listing, onClick }: ListingCardProps) {
           src={`https://localhost:7000${listing.imageURL}`}
           alt={listing.address}
           className="listing-card-image"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
+          onError={(event) => {
+            (event.target as HTMLImageElement).src =
               'https://placehold.co/400x240/e8e0d5/9a8778?text=No+Image';
           }}
         />
@@ -38,8 +39,19 @@ function ListingCard({ listing, onClick }: ListingCardProps) {
         <p className="listing-card-address">{listing.address}</p>
         <p className="listing-card-description">{listing.description}</p>
         <div className="listing-card-footer">
-          <span className="listing-card-seller">🧑 {listing.sellerName}</span>
-          <span className="listing-card-date">📅 {formattedDate}</span>
+          <span className="listing-card-seller">{listing.sellerName}</span>
+          <span className="listing-card-date">{formattedDate}</span>
+        </div>
+        <div className="listing-card-actions">
+          <AddToCartButton
+            listing={{
+              id: listing.id,
+              name: listing.address,
+              price: listing.price,
+              imageUrl: `https://localhost:7000${listing.imageURL}`,
+              categoryName: listing.category,
+            }}
+          />
         </div>
       </div>
     </div>

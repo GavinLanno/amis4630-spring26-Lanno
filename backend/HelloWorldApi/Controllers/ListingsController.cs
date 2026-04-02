@@ -6,7 +6,6 @@
 
 using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
-using HelloWorldApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,56 +15,62 @@ namespace HelloWorldApi.Controllers;
 [Route("api/[controller]")]
 public class ListingsController : ControllerBase
 {
-    private readonly ListingContext _db;
+    private readonly ListingContext _context;
 
-    public ListingsController(ListingContext db)
+    public ListingsController(ListingContext context)
     {
-        _db = db;
+        _context = context;
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ListingDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ListingDto>>> GetListings()
     {
-        var listings = await _db.Listings
+        var listings = await _context.Listings
             .Include(l => l.Category)
-            .Select(l => new ListingDto
-            {
-                Id = l.Id,
-                Address = l.Address,
-                Description = l.Description,
-                Price = l.Price,
-                CategoryName = l.Category.Name,
-                SellerName = l.SellerName,
-                PostedDate = l.PostedDate,
-                ImageURL = l.ImageURL
-            })
+            .Select(l => new ListingDto(
+                l.Id,
+                l.Address,
+                l.Description,
+                l.Price,
+                l.Category.Name,
+                l.SellerName,
+                l.PostedDate,
+                l.ImageURL
+            ))
             .ToListAsync();
 
         return Ok(listings);
     }
 
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(ListingDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ListingDto>> GetListingById(int id)
     {
-        var listing = await _db.Listings
+        var listing = await _context.Listings
             .Include(l => l.Category)
             .Where(l => l.Id == id)
-            .Select(l => new ListingDto
-            {
-                Id = l.Id,
-                Address = l.Address,
-                Description = l.Description,
-                Price = l.Price,
-                CategoryName = l.Category.Name,
-                SellerName = l.SellerName,
-                PostedDate = l.PostedDate,
-                ImageURL = l.ImageURL
-            })
+            .Select(l => new ListingDto(
+                l.Id,
+                l.Address,
+                l.Description,
+                l.Price,
+                l.Category.Name,
+                l.SellerName,
+                l.PostedDate,
+                l.ImageURL
+            ))
             .FirstOrDefaultAsync();
 
         if (listing is null)
         {
-            return NotFound(new { message = $"Listing with id {id} was not found." });
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Listing not found",
+                Detail = $"Listing with ID {id} was not found."
+            });
         }
 
         return Ok(listing);

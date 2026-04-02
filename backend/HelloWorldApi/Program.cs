@@ -1,4 +1,5 @@
 using HelloWorldApi.Data;
+using HelloWorldApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 
 // Swagger/OpenAPI
@@ -44,6 +47,7 @@ if (app.Environment.IsDevelopment())
     //I had to delete some given code for it to work
 }
 
+app.UseExceptionHandler();
 app.UseStaticFiles();
 
 app.UseHttpsRedirection();

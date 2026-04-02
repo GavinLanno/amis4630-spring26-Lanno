@@ -1,0 +1,274 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  border-bottom: 1px solid var(--stone);
+  padding-bottom: 1.25rem;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--dark);
+}
+
+.subtitle {
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.cartCard {
+  background: var(--warm-white);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.itemList {
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--stone);
+}
+
+.itemDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.itemName {
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+.itemPrice {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.quantitySelector {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--cream);
+}
+
+.quantityButton {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  background: transparent;
+  color: var(--dark);
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.quantityButton:hover:not(:disabled) {
+  background: var(--stone);
+}
+
+.quantityButton:disabled {
+  color: var(--brown);
+  cursor: not-allowed;
+}
+
+.quantityButton:focus-visible,
+.removeButton:focus-visible,
+.checkoutButton:focus-visible,
+.browseLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.quantityValue {
+  min-width: 2.5rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.lineTotal {
+  min-width: 9rem;
+  text-align: right;
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.removeButton {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--cream);
+}
+
+.totalRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.totalLabel {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brown);
+}
+
+.totalValue {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.85rem;
+  color: var(--accent);
+}
+
+.summaryActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.checkoutButton,
+.browseLink,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.checkoutButton {
+  background: var(--accent);
+  color: var(--warm-white);
+  padding: 0.95rem 1.4rem;
+}
+
+.checkoutButton:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  border: 1px solid var(--stone);
+  background: var(--warm-white);
+  color: var(--dark);
+  padding: 0.95rem 1.2rem;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: var(--stone);
+  transform: translateY(-1px);
+}
+
+.checkoutPlaceholder {
+  border: 1px dashed var(--tan);
+  border-radius: var(--radius);
+  background: rgba(201, 185, 154, 0.12);
+  padding: 1.5rem;
+  scroll-margin-top: 100px;
+}
+
+.checkoutTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--dark);
+}
+
+.checkoutMessage {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 5rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--tan);
+  border-radius: var(--radius);
+  background: rgba(201, 185, 154, 0.12);
+}
+
+.emptyMessage {
+  max-width: 34rem;
+  color: var(--text-muted);
+}
+
+.browseLink {
+  padding: 0.85rem 1.3rem;
+  background: var(--dark);
+  color: var(--warm-white);
+}
+
+.browseLink:hover {
+  background: #1f1a17;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .item {
+    flex-direction: column;
+  }
+
+  .itemActions {
+    justify-content: flex-start;
+  }
+
+  .lineTotal {
+    min-width: auto;
+    text-align: left;
+  }
+
+  .summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .checkoutButton,
+  .browseLink,
+  .secondaryButton {
+    width: 100%;
+  }
+}

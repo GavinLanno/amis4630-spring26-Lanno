@@ -1,12 +1,12 @@
-# Buckeye Marketplace - AI Agent Instructions
+# Buckeye Sublease - AI Agent Instructions
 
 ## Project Overview
 
-Buckeye Marketplace is a full-stack e-commerce application built with:
+Buckeye Sublease is a full-stack e-commerce application built with:
 
 - **Frontend:** React + TypeScript (Vite)
 - **Backend:** .NET Web API with Entity Framework Core
-- **Database:** SQL Server (InMemory for development)
+- **Database:** SQL Server (EF core Sqlite for development)
 
 ## Architecture
 

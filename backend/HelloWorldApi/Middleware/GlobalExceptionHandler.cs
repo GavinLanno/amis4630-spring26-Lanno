@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace backend.Middleware;
+namespace HelloWorldApi.Middleware;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {

@@ -65,6 +65,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 .navbar-logo {
   display: flex;
@@ -232,6 +233,9 @@ body {
 .listing-card-date {
   white-space: nowrap;
   flex-shrink: 0;
+}
+.listing-card-actions {
+  margin-top: 1rem;
 }
 
 /* ── Listing Detail ── */
