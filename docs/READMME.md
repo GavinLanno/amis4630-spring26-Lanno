@@ -371,6 +371,8 @@ My static data has ImageURL = './wwwroot/images/...' — do I need the entire fi
 - Component scaffolding
 - React Router setup
 - Empty state UI
+- Replacing the cart `localStorage` flow with backend API integration
+- Adding optimistic cart updates with loading and error states
 
 ### Prompts Used
 
@@ -382,6 +384,10 @@ Let's do it!
 Can you verify that all of these requirements are met?
 
 Yes please
+
+Can you wire the cart to the backend API while keeping `useReducer` and Context API?
+
+Can you add loading, error, and unavailable-item handling for the cart?
 ```
 
 ### What Was Accepted
@@ -390,6 +396,10 @@ Yes please
 - `Listing.ts` type file mirroring the C# model
 - React Router setup
 - Empty state handling
+- `services/` layer for listings and cart API calls
+- Cart context hydration from `GET /api/cart`
+- Optimistic add, update, remove, and clear cart behavior with backend sync
+- Cart loading and API error states in the cart UI
 
 ### Personal Judgment
 
@@ -397,6 +407,7 @@ Yes please
   - `ListingCard`
   - `ListingDetail`
 - Kept data fetch in `App.tsx` to avoid redundant network calls.
+- Kept the backend as the source of truth for cart persistence instead of `localStorage`.
 
 ---
 
@@ -406,6 +417,7 @@ Yes please
 - Reviewed all scaffolded code before accepting
 - Corrected image path logic after understanding `UseStaticFiles`
 - Verified correct `.NET port` in `launchSettings.json`
+- Mapped backend cart DTOs into frontend cart types instead of changing the backend contract.
 
 ---
 
