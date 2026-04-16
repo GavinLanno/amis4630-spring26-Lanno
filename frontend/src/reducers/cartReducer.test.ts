@@ -14,6 +14,7 @@ describe('cartReducer', () => {
       type: 'LOAD_CART_SUCCESS',
       payload: {
         cartId: 42,
+        sessionId: 'session-42',
         items: [
           {
             id: 10,
@@ -30,6 +31,7 @@ describe('cartReducer', () => {
     });
 
     expect(result.cartId).toBe(42);
+  expect(result.sessionId).toBe('session-42');
     expect(result.items).toHaveLength(1);
     expect(result.isLoading).toBe(false);
     expect(result.isSyncing).toBe(false);
@@ -41,6 +43,7 @@ describe('cartReducer', () => {
       type: 'APPLY_OPTIMISTIC_CART',
       payload: {
         cartId: 3,
+        sessionId: 'guest-session',
         items: [
           {
             id: 7,
@@ -57,6 +60,7 @@ describe('cartReducer', () => {
     });
 
     expect(result.cartId).toBe(3);
+  expect(result.sessionId).toBe('guest-session');
     expect(result.items[0].listingName).toBe('Optimistic Listing');
     expect(result.isSyncing).toBe(true);
     expect(result.errorMessage).toBe('');
@@ -66,6 +70,7 @@ describe('cartReducer', () => {
     const state = {
       ...initialCartState,
       cartId: 999,
+      sessionId: 'stale-session',
       items: [
         {
           id: 99,
@@ -88,6 +93,7 @@ describe('cartReducer', () => {
         message: 'Could not add item.',
         snapshot: {
           cartId: 5,
+          sessionId: 'restored-session',
           items: [
             {
               id: 1,
@@ -105,6 +111,7 @@ describe('cartReducer', () => {
     });
 
     expect(result.cartId).toBe(5);
+  expect(result.sessionId).toBe('restored-session');
     expect(result.items).toHaveLength(1);
     expect(result.items[0].listingName).toBe('Persisted Item');
     expect(result.isSyncing).toBe(false);
@@ -115,6 +122,7 @@ describe('cartReducer', () => {
     const state = {
       ...initialCartState,
       cartId: 22,
+      sessionId: 'existing-session',
       items: [
         {
           id: 2,
@@ -137,6 +145,7 @@ describe('cartReducer', () => {
     });
 
     expect(result.cartId).toBe(22);
+  expect(result.sessionId).toBe('existing-session');
     expect(result.items).toEqual(state.items);
     expect(result.isLoading).toBe(false);
     expect(result.isSyncing).toBe(true);

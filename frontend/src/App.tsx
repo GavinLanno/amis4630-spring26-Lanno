@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import type { Listing } from './types/Listing';
 import Navbar from './components/Navbar';
 import ListingsPage from './pages/ListingsPage';
 import ListingDetailPage from './pages/Listingdetailpage.tsx';
-//import { CartProvider } from "./contexts/CartContext";
+import CartPage from './pages/CartPage';
+import { CartProvider } from './contexts/CartContext';
+import { fetchListings } from './services/listingsService';
 
 function App() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -14,12 +16,8 @@ function App() {
 
   // Fetch all listings once at the app level and pass down
   useEffect(() => {
-    fetch('https://localhost:7000/api/listings')
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to fetch listings');
-        return response.json();
-      })
-      .then((data: Listing[]) => {
+    fetchListings()
+      .then((data) => {
         setListings(data);
         setLoading(false);
       })
@@ -33,22 +31,21 @@ function App() {
   if (error)   return <div className="status-screen error">{error}</div>;
 
   return (
-    <>
-      <head> 
-        <title>Buckeye Sublease</title> 
-        <link rel="icon" href="HouseFavicon.png"/>
-      </head>
-
+    <CartProvider>
       <div className="app">
         <Navbar />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<ListingsPage listings={listings} />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
+            <Route path="/listings" element={<Navigate to="/" replace />} />
             <Route path="/listings/:id" element={<ListingDetailPage listings={listings} />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
-    </>
+    </CartProvider>
   );
 }
 

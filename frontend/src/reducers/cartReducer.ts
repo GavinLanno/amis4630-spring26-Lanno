@@ -2,6 +2,7 @@ import type { CartAction, CartState } from '../types/cart';
 
 export const initialCartState: CartState = {
   cartId: null,
+  sessionId: null,
   items: [],
   isLoading: true,
   isSyncing: false,
@@ -21,6 +22,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         cartId: action.payload.cartId,
+        sessionId: action.payload.sessionId,
         items: action.payload.items,
         isLoading: false,
         isSyncing: false,
@@ -39,6 +41,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         cartId: action.payload.cartId,
+        sessionId: action.payload.sessionId,
         items: action.payload.items,
         isSyncing: true,
         errorMessage: '',
@@ -48,6 +51,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         cartId: action.payload.cartId,
+        sessionId: action.payload.sessionId,
         items: action.payload.items,
         isLoading: false,
         isSyncing: false,
@@ -58,6 +62,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         cartId: action.payload.snapshot.cartId,
+        sessionId: action.payload.snapshot.sessionId,
         items: action.payload.snapshot.items,
         isLoading: false,
         isSyncing: false,

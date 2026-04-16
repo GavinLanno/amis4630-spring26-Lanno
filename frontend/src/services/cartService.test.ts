@@ -21,12 +21,13 @@ describe('mapCartResponse', () => {
     });
 
     expect(result.cartId).toBe(12);
+    expect(result.sessionId).toBeNull();
     expect(result.items).toEqual([
       {
         id: 4,
         listingId: 9,
         listingName: '123 Main St',
-        imageUrl: 'https://localhost:7000/images/house.jpg',
+        imageUrl: '/images/house.jpg',
         price: 450,
         categoryName: 'House',
         quantity: 2,
@@ -54,6 +55,7 @@ describe('mapCartResponse', () => {
     });
 
     expect(result.cartId).toBeNull();
+    expect(result.sessionId).toBeNull();
     expect(result.items[0].imageUrl).toBe('https://cdn.example.com/condo.jpg');
   });
 });

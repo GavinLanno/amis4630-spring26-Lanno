@@ -17,6 +17,8 @@ import {
 } from '../services/cartService';
 import type { CartItem, CartSnapshot, CartState } from '../types/cart';
 
+const GUEST_SESSION_STORAGE_KEY = 'guestCartSessionId';
+
 interface AddToCartInput {
   listingId: number;
   listingName: string;
@@ -50,8 +52,30 @@ function cloneItems(items: CartItem[]): CartItem[] {
 function createSnapshot(state: CartState): CartSnapshot {
   return {
     cartId: state.cartId,
+    sessionId: state.sessionId,
     items: cloneItems(state.items),
   };
+}
+
+function readGuestSessionId(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.sessionStorage.getItem(GUEST_SESSION_STORAGE_KEY);
+}
+
+function persistGuestSessionId(sessionId: string | null): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (sessionId) {
+    window.sessionStorage.setItem(GUEST_SESSION_STORAGE_KEY, sessionId);
+    return;
+  }
+
+  window.sessionStorage.removeItem(GUEST_SESSION_STORAGE_KEY);
 }
 
 function recalculateItem(item: CartItem): CartItem {
@@ -73,6 +97,7 @@ function buildOptimisticAddCart(
   if (existingItem) {
     return {
       cartId: state.cartId,
+      sessionId: state.sessionId,
       items: state.items.map((cartItem) =>
         cartItem.listingId === item.listingId
           ? recalculateItem({
@@ -86,6 +111,7 @@ function buildOptimisticAddCart(
 
   return {
     cartId: state.cartId,
+    sessionId: state.sessionId,
     items: [
       ...cloneItems(state.items),
       recalculateItem({
@@ -109,6 +135,7 @@ function buildOptimisticQuantityCart(
 ): CartSnapshot {
   return {
     cartId: state.cartId,
+    sessionId: state.sessionId,
     items: state.items.map((item) =>
       item.listingId === listingId
         ? recalculateItem({
@@ -126,6 +153,7 @@ function buildOptimisticRemoveCart(
 ): CartSnapshot {
   return {
     cartId: state.cartId,
+    sessionId: state.sessionId,
     items: state.items.filter((item) => item.listingId !== listingId),
   };
 }
@@ -140,11 +168,13 @@ export function CartProvider({ children }: CartProviderProps) {
       dispatch({ type: 'LOAD_CART_REQUEST' });
 
       try {
-        const cart = await fetchCart();
+        const cart = await fetchCart(readGuestSessionId());
 
         if (!isMounted) {
           return;
         }
+
+        persistGuestSessionId(cart.sessionId);
 
         dispatch({
           type: 'LOAD_CART_SUCCESS',
@@ -188,7 +218,10 @@ export function CartProvider({ children }: CartProviderProps) {
         const cart = await addCartItemRequest(
           item.listingId,
           item.quantity ?? 1,
+          state.sessionId,
         );
+
+        persistGuestSessionId(cart.sessionId);
 
         dispatch({
           type: 'SYNC_CART_SUCCESS',
@@ -229,7 +262,13 @@ export function CartProvider({ children }: CartProviderProps) {
       });
 
       try {
-        const cart = await updateCartItemRequest(cartItem.id, quantity);
+        const cart = await updateCartItemRequest(
+          cartItem.id,
+          quantity,
+          state.sessionId,
+        );
+
+        persistGuestSessionId(cart.sessionId);
 
         dispatch({
           type: 'SYNC_CART_SUCCESS',
@@ -270,7 +309,9 @@ export function CartProvider({ children }: CartProviderProps) {
       });
 
       try {
-        const cart = await removeCartItemRequest(cartItem.id);
+        const cart = await removeCartItemRequest(cartItem.id, state.sessionId);
+
+        persistGuestSessionId(cart.sessionId);
 
         dispatch({
           type: 'SYNC_CART_SUCCESS',
@@ -301,12 +342,15 @@ export function CartProvider({ children }: CartProviderProps) {
       type: 'APPLY_OPTIMISTIC_CART',
       payload: {
         cartId: state.cartId,
+        sessionId: state.sessionId,
         items: [],
       },
     });
 
     try {
-      const cart = await clearCartRequest();
+      const cart = await clearCartRequest(state.sessionId);
+
+      persistGuestSessionId(cart.sessionId);
 
       dispatch({
         type: 'SYNC_CART_SUCCESS',

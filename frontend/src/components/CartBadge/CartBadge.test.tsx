@@ -19,6 +19,7 @@ describe('CartBadge', () => {
     mockedUseCartContext.mockReturnValue({
       state: {
         cartId: null,
+        sessionId: null,
         items: [],
         isLoading: true,
         isSyncing: false,
@@ -51,6 +52,7 @@ describe('CartBadge', () => {
     mockedUseCartContext.mockReturnValue({
       state: {
         cartId: 3,
+        sessionId: 'guest-session',
         items: [],
         isLoading: false,
         isSyncing: false,

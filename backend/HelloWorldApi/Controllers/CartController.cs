@@ -9,7 +9,6 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -18,9 +17,10 @@ namespace HelloWorldApi.Controllers;
 
 [ApiController]
 [Route("api/cart")]
-[Authorize]
 public class CartController : ControllerBase
 {
+    private const string GuestSessionHeaderName = "X-Session-Id";
+    private static readonly TimeSpan GuestSessionTtl = TimeSpan.FromHours(24);
     private readonly ListingContext _context;
 
     public CartController(ListingContext context)
@@ -31,17 +31,21 @@ public class CartController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<CartDto>> GetCart()
     {
-        if (!TryGetCurrentUserId(out var userId))
+        var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: true);
+
+        if (identity is null)
         {
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
-                Detail = "A valid user identity is required."
+                Detail = "A valid user identity or guest cart session is required."
             });
         }
 
-        var cart = await GetCartWithItemsAsync(userId);
+        SetGuestSessionHeader(identity.SessionId);
+
+        var cart = await GetCartWithItemsAsync(identity);
 
         if (cart is null)
         {
@@ -54,15 +58,19 @@ public class CartController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CartDto>> AddToCart(AddToCartDto request)
     {
-        if (!TryGetCurrentUserId(out var userId))
+        var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: true);
+
+        if (identity is null)
         {
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
-                Detail = "A valid user identity is required."
+                Detail = "A valid user identity or guest cart session is required."
             });
         }
+
+        SetGuestSessionHeader(identity.SessionId);
 
         if (request.Quantity <= 0)
         {
@@ -88,20 +96,7 @@ public class CartController : ControllerBase
             });
         }
 
-        var cart = await _context.Carts
-            .Include(item => item.CartItems)
-            .FirstOrDefaultAsync(item => item.UserId == userId);
-
-        if (cart is null)
-        {
-            cart = new Cart
-            {
-                UserId = userId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Carts.Add(cart);
-        }
+        var cart = await GetOrCreateCartAsync(identity);
 
         var existingCartItem = cart.CartItems
             .FirstOrDefault(item => item.ListingId == request.ListingId);
@@ -125,7 +120,7 @@ public class CartController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync(userId);
+        var updatedCart = await GetCartWithItemsAsync(identity);
 
         var response = MapCart(updatedCart!);
 
@@ -140,15 +135,19 @@ public class CartController : ControllerBase
     [HttpPut("{cartItemId:int}")]
     public async Task<ActionResult<CartDto>> UpdateCartItem(int cartItemId, UpdateCartItemDto request)
     {
-        if (!TryGetCurrentUserId(out var userId))
+        var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);
+
+        if (identity is null)
         {
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
-                Detail = "A valid user identity is required."
+                Detail = "A valid user identity or guest cart session is required."
             });
         }
+
+        SetGuestSessionHeader(identity.SessionId);
 
         if (request.Quantity <= 0)
         {
@@ -160,9 +159,19 @@ public class CartController : ControllerBase
             });
         }
 
-        var cartItem = await _context.CartItems
-            .Include(item => item.Cart)
-            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == userId);
+        var cart = await GetCartWithItemsAsync(identity);
+
+        if (cart is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity or guest cart session is required."
+            });
+        }
+
+        var cartItem = cart.CartItems.FirstOrDefault(item => item.Id == cartItemId);
 
         if (cartItem is null)
         {
@@ -178,7 +187,7 @@ public class CartController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync(userId);
+        var updatedCart = await GetCartWithItemsByIdAsync(cart.Id);
 
         return Ok(MapCart(updatedCart!));
     }
@@ -186,19 +195,33 @@ public class CartController : ControllerBase
     [HttpDelete("{cartItemId:int}")]
     public async Task<ActionResult<CartDto>> RemoveCartItem(int cartItemId)
     {
-        if (!TryGetCurrentUserId(out var userId))
+        var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);
+
+        if (identity is null)
         {
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
-                Detail = "A valid user identity is required."
+                Detail = "A valid user identity or guest cart session is required."
             });
         }
 
-        var cartItem = await _context.CartItems
-            .Include(item => item.Cart)
-            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == userId);
+        SetGuestSessionHeader(identity.SessionId);
+
+        var cart = await GetCartWithItemsAsync(identity);
+
+        if (cart is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity or guest cart session is required."
+            });
+        }
+
+        var cartItem = cart.CartItems.FirstOrDefault(item => item.Id == cartItemId);
 
         if (cartItem is null)
         {
@@ -213,7 +236,7 @@ public class CartController : ControllerBase
         _context.CartItems.Remove(cartItem);
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync(userId);
+        var updatedCart = await GetCartWithItemsByIdAsync(cart.Id);
 
         if (updatedCart is null)
         {
@@ -226,19 +249,21 @@ public class CartController : ControllerBase
     [HttpDelete("clear")]
     public async Task<ActionResult<CartDto>> ClearCart()
     {
-        if (!TryGetCurrentUserId(out var userId))
+        var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);
+
+        if (identity is null)
         {
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
                 Title = "Unauthorized",
-                Detail = "A valid user identity is required."
+                Detail = "A valid user identity or guest cart session is required."
             });
         }
 
-        var cart = await _context.Carts
-            .Include(item => item.CartItems)
-            .FirstOrDefaultAsync(item => item.UserId == userId);
+        SetGuestSessionHeader(identity.SessionId);
+
+        var cart = await GetCartWithItemsAsync(identity);
 
         if (cart is null)
         {
@@ -254,27 +279,172 @@ public class CartController : ControllerBase
         });
     }
 
-    private bool TryGetCurrentUserId(out string userId)
+    private async Task<CartIdentity?> ResolveCartIdentityAsync(bool allowCreateGuestSession)
     {
         var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(claimValue))
+        if (!string.IsNullOrWhiteSpace(claimValue))
         {
-            userId = string.Empty;
-            return false;
+            return new CartIdentity(claimValue, null);
         }
 
-        userId = claimValue;
-        return true;
+        var now = DateTime.UtcNow;
+        var sessionId = Request.Headers[GuestSessionHeaderName].ToString();
+
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            var guestSession = await _context.GuestSessions
+                .FirstOrDefaultAsync(item => item.SessionId == sessionId);
+
+            if (guestSession is not null)
+            {
+                if (guestSession.ExpiresAtUtc <= now)
+                {
+                    _context.GuestSessions.Remove(guestSession);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    guestSession.ExpiresAtUtc = now.Add(GuestSessionTtl);
+                    await _context.SaveChangesAsync();
+                    return new CartIdentity(null, guestSession.SessionId);
+                }
+            }
+        }
+
+        if (!allowCreateGuestSession)
+        {
+            return null;
+        }
+
+        var createdGuestSession = await CreateGuestSessionAsync();
+        return new CartIdentity(null, createdGuestSession.SessionId);
     }
 
-    private Task<Cart?> GetCartWithItemsAsync(string userId)
+    private async Task<Cart?> GetCartWithItemsAsync(CartIdentity identity)
+    {
+        if (!string.IsNullOrWhiteSpace(identity.UserId))
+        {
+            return await _context.Carts
+                .Include(item => item.CartItems)
+                .ThenInclude(item => item.Listing)
+                .ThenInclude(item => item.Category)
+                .FirstOrDefaultAsync(item => item.UserId == identity.UserId);
+        }
+
+        if (string.IsNullOrWhiteSpace(identity.SessionId))
+        {
+            return null;
+        }
+
+        var cartId = await _context.GuestSessions
+            .Where(item => item.SessionId == identity.SessionId)
+            .Select(item => (int?)item.CartId)
+            .FirstOrDefaultAsync();
+
+        if (!cartId.HasValue)
+        {
+            return null;
+        }
+
+        return await GetCartWithItemsByIdAsync(cartId.Value);
+    }
+
+    private Task<Cart?> GetCartWithItemsByIdAsync(int cartId)
     {
         return _context.Carts
             .Include(item => item.CartItems)
             .ThenInclude(item => item.Listing)
             .ThenInclude(item => item.Category)
-            .FirstOrDefaultAsync(item => item.UserId == userId);
+            .FirstOrDefaultAsync(item => item.Id == cartId);
+    }
+
+    private async Task<Cart> GetOrCreateCartAsync(CartIdentity identity)
+    {
+        var cart = await GetCartWithItemsAsync(identity);
+
+        if (cart is not null)
+        {
+            return cart;
+        }
+
+        if (!string.IsNullOrWhiteSpace(identity.UserId))
+        {
+            cart = new Cart
+            {
+                UserId = identity.UserId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Carts.Add(cart);
+            await _context.SaveChangesAsync();
+            return cart;
+        }
+
+        if (string.IsNullOrWhiteSpace(identity.SessionId))
+        {
+            throw new InvalidOperationException("A valid guest cart session is required.");
+        }
+
+        var guestSession = await _context.GuestSessions
+            .FirstOrDefaultAsync(item => item.SessionId == identity.SessionId);
+
+        if (guestSession is null)
+        {
+            throw new InvalidOperationException("A valid guest cart session is required.");
+        }
+
+        cart = new Cart
+        {
+            UserId = BuildGuestUserId(identity.SessionId),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Carts.Add(cart);
+        await _context.SaveChangesAsync();
+
+        guestSession.CartId = cart.Id;
+        await _context.SaveChangesAsync();
+
+        return cart;
+    }
+
+    private async Task<GuestSession> CreateGuestSessionAsync()
+    {
+        var sessionId = Guid.NewGuid().ToString("N");
+        var now = DateTime.UtcNow;
+
+        var cart = new Cart
+        {
+            UserId = BuildGuestUserId(sessionId),
+            CreatedAt = now
+        };
+
+        var guestSession = new GuestSession
+        {
+            SessionId = sessionId,
+            Cart = cart,
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.Add(GuestSessionTtl)
+        };
+
+        _context.GuestSessions.Add(guestSession);
+        await _context.SaveChangesAsync();
+
+        return guestSession;
+    }
+
+    private static string BuildGuestUserId(string sessionId)
+    {
+        return $"guest:{sessionId}";
+    }
+
+    private void SetGuestSessionHeader(string? sessionId)
+    {
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            Response.Headers[GuestSessionHeaderName] = sessionId;
+        }
     }
 
     private static CartDto MapCart(Cart cart)
@@ -296,4 +466,6 @@ public class CartController : ControllerBase
                 .ToList()
         };
     }
+
+    private sealed record CartIdentity(string? UserId, string? SessionId);
 }

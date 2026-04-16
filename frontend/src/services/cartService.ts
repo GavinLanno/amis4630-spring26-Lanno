@@ -1,7 +1,9 @@
 import type { CartItem, CartSnapshot } from '../types/cart';
 
-const API_BASE_URL = 'https://localhost:7000/api';
-const BACKEND_BASE_URL = 'https://localhost:7000';
+const API_BASE_URL = '/api';
+const BACKEND_BASE_URL =
+  import.meta.env.VITE_BACKEND_BASE_URL ?? 'https://localhost:7000';
+const SESSION_HEADER_NAME = 'X-Session-Id';
 
 interface ProblemDetails {
   detail?: string;
@@ -46,25 +48,47 @@ async function parseErrorMessage(response: Response): Promise<string> {
 
 async function requestCart(
   input: RequestInfo | URL,
+  sessionId: string | null,
   init?: RequestInit,
 ): Promise<CartSnapshot> {
-  const response = await fetch(input, init);
+  const headers = new Headers(init?.headers);
+
+  if (sessionId) {
+    headers.set(SESSION_HEADER_NAME, sessionId);
+  }
+
+  const response = await fetch(input, {
+    ...init,
+    headers,
+  });
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));
   }
 
   const data = (await response.json()) as CartResponse;
+  const resolvedSessionId = response.headers.get(SESSION_HEADER_NAME) ?? sessionId;
 
-  return mapCartResponse(data);
+  return mapCartResponse(data, resolvedSessionId);
 }
 
 function toAbsoluteImageUrl(imageUrl: string): string {
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  if (imageUrl.startsWith('/')) {
     return imageUrl;
   }
 
-  return `${BACKEND_BASE_URL}${imageUrl}`;
+  try {
+    const parsedImageUrl = new URL(imageUrl);
+    const parsedBackendUrl = new URL(BACKEND_BASE_URL);
+
+    if (parsedImageUrl.origin === parsedBackendUrl.origin) {
+      return `${parsedImageUrl.pathname}${parsedImageUrl.search}`;
+    }
+
+    return imageUrl;
+  } catch {
+    return `${BACKEND_BASE_URL}${imageUrl}`;
+  }
 }
 
 function mapCartItem(item: CartItemResponse): CartItem {
@@ -80,22 +104,27 @@ function mapCartItem(item: CartItemResponse): CartItem {
   };
 }
 
-export function mapCartResponse(data: CartResponse): CartSnapshot {
+export function mapCartResponse(
+  data: CartResponse,
+  sessionId: string | null = null,
+): CartSnapshot {
   return {
     cartId: data.id > 0 ? data.id : null,
+    sessionId,
     items: data.cartItems.map(mapCartItem),
   };
 }
 
-export async function fetchCart(): Promise<CartSnapshot> {
-  return requestCart(`${API_BASE_URL}/cart`);
+export async function fetchCart(sessionId: string | null): Promise<CartSnapshot> {
+  return requestCart(`${API_BASE_URL}/cart`, sessionId);
 }
 
 export async function addCartItem(
   listingId: number,
   quantity: number,
+  sessionId: string | null,
 ): Promise<CartSnapshot> {
-  return requestCart(`${API_BASE_URL}/cart`, {
+  return requestCart(`${API_BASE_URL}/cart`, sessionId, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -110,8 +139,9 @@ export async function addCartItem(
 export async function updateCartItem(
   cartItemId: number,
   quantity: number,
+  sessionId: string | null,
 ): Promise<CartSnapshot> {
-  return requestCart(`${API_BASE_URL}/cart/${cartItemId}`, {
+  return requestCart(`${API_BASE_URL}/cart/${cartItemId}`, sessionId, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -122,14 +152,17 @@ export async function updateCartItem(
   });
 }
 
-export async function removeCartItem(cartItemId: number): Promise<CartSnapshot> {
-  return requestCart(`${API_BASE_URL}/cart/${cartItemId}`, {
+export async function removeCartItem(
+  cartItemId: number,
+  sessionId: string | null,
+): Promise<CartSnapshot> {
+  return requestCart(`${API_BASE_URL}/cart/${cartItemId}`, sessionId, {
     method: 'DELETE',
   });
 }
 
-export async function clearCart(): Promise<CartSnapshot> {
-  return requestCart(`${API_BASE_URL}/cart/clear`, {
+export async function clearCart(sessionId: string | null): Promise<CartSnapshot> {
+  return requestCart(`${API_BASE_URL}/cart/clear`, sessionId, {
     method: 'DELETE',
   });
 }

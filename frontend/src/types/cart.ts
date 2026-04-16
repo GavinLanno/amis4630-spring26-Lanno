@@ -11,6 +11,7 @@ export interface CartItem {
 
 export interface CartSnapshot {
   cartId: number | null;
+  sessionId: string | null;
   items: CartItem[];
 }
 
