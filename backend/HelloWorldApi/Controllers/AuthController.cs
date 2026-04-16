@@ -1,11 +1,14 @@
+using FluentValidation;
+using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 
@@ -15,16 +18,27 @@ namespace HelloWorldApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private static readonly ConcurrentDictionary<string, AuthUser> Users = new();
+    private static readonly TimeSpan AccessTokenTtl = TimeSpan.FromHours(1);
+    private static readonly TimeSpan RefreshTokenTtl = TimeSpan.FromDays(7);
+
+    private readonly ListingContext _context;
     private readonly IConfiguration _configuration;
     private readonly IPasswordHasher<AuthUser> _passwordHasher;
+    private readonly IPasswordHasher<RefreshToken> _refreshTokenHasher;
+    private readonly IValidator<RegisterRequestDto> _registerValidator;
 
     public AuthController(
+        ListingContext context,
         IConfiguration configuration,
-        IPasswordHasher<AuthUser> passwordHasher)
+        IPasswordHasher<AuthUser> passwordHasher,
+        IPasswordHasher<RefreshToken> refreshTokenHasher,
+        IValidator<RegisterRequestDto> registerValidator)
     {
+        _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
+        _refreshTokenHasher = refreshTokenHasher;
+        _registerValidator = registerValidator;
     }
 
     [HttpPost("register")]
@@ -32,58 +46,56 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public ActionResult Register(RegisterRequestDto request)
+    public async Task<ActionResult> Register(RegisterRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.UserId)
-            || string.IsNullOrWhiteSpace(request.Password)
-            || string.IsNullOrWhiteSpace(request.Role))
+        var validationResult = await _registerValidator.ValidateAsync(request);
+
+        if (!validationResult.IsValid)
         {
             return BadRequest(new ProblemDetails
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "Invalid registration request",
-                Detail = "UserId, Password, and Role are required."
+                Detail = string.Join(" ", validationResult.Errors.Select(error => error.ErrorMessage).Distinct())
             });
         }
 
-        if (Users.ContainsKey(request.UserId))
+        var duplicateUserExists = await _context.AuthUsers.AnyAsync(user =>
+            user.UserId == request.UserId || user.Email == request.Email);
+
+        if (duplicateUserExists)
         {
             return Conflict(new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "User already exists",
-                Detail = $"A user with ID '{request.UserId}' already exists."
+                Detail = $"A user with ID '{request.UserId}' or email '{request.Email}' already exists."
             });
         }
 
         var user = new AuthUser
         {
             UserId = request.UserId,
+            Email = request.Email,
             Role = request.Role
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
-        if (!Users.TryAdd(user.UserId, user))
-        {
-            return Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "User already exists",
-                Detail = $"A user with ID '{request.UserId}' already exists."
-            });
-        }
+        _context.AuthUsers.Add(user);
+        await _context.SaveChangesAsync();
 
         return StatusCode(StatusCodes.Status201Created);
     }
 
     [HttpPost("token")]
+    [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(TokenResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public ActionResult<TokenResponseDto> CreateToken(CreateTokenRequestDto request)
+    public async Task<ActionResult<TokenResponseDto>> CreateToken(CreateTokenRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.Password))
         {
@@ -95,7 +107,10 @@ public class AuthController : ControllerBase
             });
         }
 
-        if (!Users.TryGetValue(request.UserId, out var user))
+        var user = await _context.AuthUsers.FirstOrDefaultAsync(candidate =>
+            candidate.UserId == request.UserId || candidate.Email == request.UserId);
+
+        if (user is null)
         {
             return Unauthorized(new ProblemDetails
             {
@@ -120,29 +135,84 @@ public class AuthController : ControllerBase
             });
         }
 
+        var (accessToken, accessTokenExpiresAtUtc) = CreateAccessToken(user);
+        var (refreshTokenEntity, refreshTokenPlainText) = CreateRefreshToken(user.Id);
+
+        _context.RefreshTokens.Add(refreshTokenEntity);
+        await _context.SaveChangesAsync();
+
+        return Ok(new TokenResponseDto(accessToken, accessTokenExpiresAtUtc, refreshTokenPlainText));
+    }
+
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(TokenResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid refresh token request",
+                Detail = "RefreshToken is required."
+            });
+        }
+
+        var activeRefreshTokens = await _context.RefreshTokens
+            .Include(token => token.AuthUser)
+            .Where(token => token.RevokedAtUtc == null && token.ExpiresAtUtc > DateTime.UtcNow)
+            .ToListAsync();
+
+        var matchedToken = activeRefreshTokens.FirstOrDefault(token =>
+            _refreshTokenHasher.VerifyHashedPassword(token, token.TokenHash, request.RefreshToken)
+            != PasswordVerificationResult.Failed);
+
+        if (matchedToken is null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Invalid refresh token",
+                Detail = "The supplied refresh token is invalid or expired."
+            });
+        }
+
+        matchedToken.RevokedAtUtc = DateTime.UtcNow;
+
+        var (accessToken, accessTokenExpiresAtUtc) = CreateAccessToken(matchedToken.AuthUser);
+        var (refreshTokenEntity, refreshTokenPlainText) = CreateRefreshToken(matchedToken.AuthUserId);
+
+        _context.RefreshTokens.Add(refreshTokenEntity);
+        await _context.SaveChangesAsync();
+
+        return Ok(new TokenResponseDto(accessToken, accessTokenExpiresAtUtc, refreshTokenPlainText));
+    }
+
+    private (string AccessToken, DateTime ExpiresAtUtc) CreateAccessToken(AuthUser user)
+    {
         var jwtSigningKey = _configuration["JWT_SIGNING_KEY"];
 
         if (string.IsNullOrWhiteSpace(jwtSigningKey))
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
-            {
-                Status = StatusCodes.Status500InternalServerError,
-                Title = "Missing JWT signing key",
-                Detail = "JWT_SIGNING_KEY is not configured."
-            });
+            throw new InvalidOperationException("JWT_SIGNING_KEY is not configured.");
         }
 
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.UserId),
-            new(ClaimTypes.Role, user.Role)
+            new(ClaimTypes.Role, user.Role),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
         };
 
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
             SecurityAlgorithms.HmacSha256);
 
-        var expiresAtUtc = DateTime.UtcNow.AddHours(1);
+        var expiresAtUtc = DateTime.UtcNow.Add(AccessTokenTtl);
 
         var tokenDescriptor = new JwtSecurityToken(
             claims: claims,
@@ -151,6 +221,21 @@ public class AuthController : ControllerBase
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
 
-        return Ok(new TokenResponseDto(accessToken, expiresAtUtc));
+        return (accessToken, expiresAtUtc);
+    }
+
+    private (RefreshToken RefreshToken, string PlainTextToken) CreateRefreshToken(int authUserId)
+    {
+        var plainTextToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        var refreshToken = new RefreshToken
+        {
+            AuthUserId = authUserId,
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.Add(RefreshTokenTtl)
+        };
+
+        refreshToken.TokenHash = _refreshTokenHasher.HashPassword(refreshToken, plainTextToken);
+
+        return (refreshToken, plainTextToken);
     }
 }

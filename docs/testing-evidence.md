@@ -3,6 +3,15 @@
 Date: 2026-04-16
 Feature scope: Login/Register page + navbar Login button + auth state integration.
 
+## Auth Backend Seed Credentials (Local Dev)
+
+- UserId: admin
+- Email: admin@buckeye.local
+- Password: AdminPass1
+- Role: Admin
+
+These credentials are seeded by backend startup for local development/test verification only.
+
 ## 1) One Prompt Used With Testing Agent
 
 Prompt used with the testing execution subagent:

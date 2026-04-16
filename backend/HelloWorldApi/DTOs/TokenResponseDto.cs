@@ -2,5 +2,6 @@ namespace HelloWorldApi.DTOs;
 
 public record TokenResponseDto(
     string AccessToken,
-    DateTime ExpiresAtUtc
+    DateTime ExpiresAtUtc,
+    string? RefreshToken = null
 );

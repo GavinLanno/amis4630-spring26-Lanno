@@ -25,6 +25,7 @@ interface LoginInput {
 }
 
 interface RegisterInput extends LoginInput {
+  email: string;
   confirmPassword: string;
 }
 
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const register = useCallback(
-    async ({ userId, password, confirmPassword }: RegisterInput) => {
+    async ({ userId, email, password, confirmPassword }: RegisterInput) => {
       if (password !== confirmPassword) {
         dispatch({
           type: 'AUTH_FAILURE',
@@ -118,6 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         await registerUser({
           userId,
+          email,
           password,
           role: DEFAULT_REGISTER_ROLE,
         });

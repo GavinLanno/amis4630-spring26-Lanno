@@ -1,6 +1,8 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.Middleware;
+using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
+using HelloWorldApi.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +42,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IPasswordHasher<AuthUser>, PasswordHasher<AuthUser>>();
+builder.Services.AddScoped<IPasswordHasher<RefreshToken>, PasswordHasher<RefreshToken>>();
+builder.Services.AddScoped<FluentValidation.IValidator<RegisterRequestDto>, RegisterRequestValidator>();
 
 
 // Swagger/OpenAPI
@@ -65,6 +69,42 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ListingContext>();
     db.Database.Migrate();
+
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AuthUser>>();
+    var adminUserId = builder.Configuration["ADMIN_SEED_USER_ID"] ?? "admin";
+    var adminEmail = builder.Configuration["ADMIN_SEED_EMAIL"] ?? "admin@buckeye.local";
+    var adminPassword = builder.Configuration["ADMIN_SEED_PASSWORD"] ?? "AdminPass1";
+
+    var adminAlreadyExists = db.AuthUsers.Any(user => user.UserId == adminUserId || user.Email == adminEmail);
+
+    if (!adminAlreadyExists)
+    {
+        var adminUser = new AuthUser
+        {
+            UserId = adminUserId,
+            Email = adminEmail,
+            Role = "Admin"
+        };
+
+        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminPassword);
+
+        db.AuthUsers.Add(adminUser);
+
+        try
+        {
+            db.SaveChanges();
+        }
+        catch (DbUpdateException)
+        {
+            var seedCompletedByAnotherProcess = db.AuthUsers.Any(user =>
+                user.UserId == adminUserId || user.Email == adminEmail);
+
+            if (!seedCompletedByAnotherProcess)
+            {
+                throw;
+            }
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.

@@ -18,6 +18,7 @@ export interface LoginInput {
 }
 
 export interface RegisterInput extends LoginInput {
+  email: string;
   role: string;
 }
 
@@ -69,7 +70,7 @@ export async function createToken({ userId, password }: LoginInput): Promise<Log
   return mapTokenResponse(data);
 }
 
-export async function registerUser({ userId, password, role }: RegisterInput): Promise<void> {
+export async function registerUser({ userId, email, password, role }: RegisterInput): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
     headers: {
@@ -77,6 +78,7 @@ export async function registerUser({ userId, password, role }: RegisterInput): P
     },
     body: JSON.stringify({
       userId,
+      email,
       password,
       role,
     }),

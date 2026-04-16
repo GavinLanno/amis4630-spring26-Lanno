@@ -66,6 +66,7 @@ describe('authService', () => {
 
     await registerUser({
       userId: 'new-buckeye',
+      email: 'new-buckeye@example.com',
       password: 'secure-password',
       role: 'user',
     });
@@ -76,6 +77,7 @@ describe('authService', () => {
         method: 'POST',
         body: JSON.stringify({
           userId: 'new-buckeye',
+          email: 'new-buckeye@example.com',
           password: 'secure-password',
           role: 'user',
         }),

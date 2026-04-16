@@ -11,6 +11,7 @@ function AuthPage() {
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -70,6 +71,11 @@ function AuthPage() {
       return;
     }
 
+    if (!email.trim()) {
+      setLocalErrorMessage('Email is required.');
+      return;
+    }
+
     if (password.length < 8) {
       setLocalErrorMessage('Password must be at least 8 characters long.');
       return;
@@ -77,6 +83,7 @@ function AuthPage() {
 
     const didRegisterSucceed = await register({
       userId: userId.trim(),
+      email: email.trim(),
       password,
       confirmPassword,
     });
@@ -163,6 +170,26 @@ function AuthPage() {
               />
             </div>
 
+            {mode === 'register' ? (
+              <div className={styles.inputGroup}>
+                <label className={styles.label} htmlFor="auth-email">
+                  Email
+                </label>
+                <input
+                  id="auth-email"
+                  className={styles.input}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  required
+                  aria-label="Email"
+                />
+              </div>
+            ) : null}
+
+
             <div className={styles.inputGroup}>
               <label className={styles.label} htmlFor="auth-password">
                 Password
@@ -181,6 +208,7 @@ function AuthPage() {
               />
             </div>
 
+            
             {mode === 'register' ? (
               <div className={styles.inputGroup}>
                 <label className={styles.label} htmlFor="auth-confirm-password">

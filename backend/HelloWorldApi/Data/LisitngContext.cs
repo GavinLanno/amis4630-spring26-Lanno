@@ -19,9 +19,29 @@ public class ListingContext : DbContext
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<GuestSession> GuestSessions { get; set; }
+    public DbSet<AuthUser> AuthUsers { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AuthUser>()
+            .HasIndex(user => user.UserId)
+            .IsUnique();
+
+        modelBuilder.Entity<AuthUser>()
+            .HasIndex(user => user.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(token => token.TokenHash)
+            .IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(token => token.AuthUser)
+            .WithMany(user => user.RefreshTokens)
+            .HasForeignKey(token => token.AuthUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<GuestSession>()
             .HasIndex(item => item.SessionId)
             .IsUnique();
