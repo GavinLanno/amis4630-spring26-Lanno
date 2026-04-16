@@ -110,4 +110,36 @@ describe('cartReducer', () => {
     expect(result.isSyncing).toBe(false);
     expect(result.errorMessage).toBe('Could not add item.');
   });
+
+  it('handles CLEAR_CART_ERROR by clearing only the error message', () => {
+    const state = {
+      ...initialCartState,
+      cartId: 22,
+      items: [
+        {
+          id: 2,
+          listingId: 2,
+          listingName: 'Existing Item',
+          price: 300,
+          quantity: 3,
+          imageUrl: '/existing.jpg',
+          categoryName: 'Townhome',
+          lineTotal: 900,
+        },
+      ],
+      isLoading: false,
+      isSyncing: true,
+      errorMessage: 'Temporary error',
+    };
+
+    const result = cartReducer(state, {
+      type: 'CLEAR_CART_ERROR',
+    });
+
+    expect(result.cartId).toBe(22);
+    expect(result.items).toEqual(state.items);
+    expect(result.isLoading).toBe(false);
+    expect(result.isSyncing).toBe(true);
+    expect(result.errorMessage).toBe('');
+  });
 });
