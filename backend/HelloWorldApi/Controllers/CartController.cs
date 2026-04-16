@@ -11,6 +11,7 @@ using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HelloWorldApi.Controllers;
 
@@ -18,7 +19,7 @@ namespace HelloWorldApi.Controllers;
 [Route("api/cart")]
 public class CartController : ControllerBase
 {
-    private const string CurrentUserId = "default-user";
+    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "default-user";
     private readonly ListingContext _context;
 
     public CartController(ListingContext context)

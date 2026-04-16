@@ -1,14 +1,45 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.Middleware;
+using HelloWorldApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+var jwtSigningKey = builder.Configuration["JWT_SIGNING_KEY"];
+
+if (string.IsNullOrWhiteSpace(jwtSigningKey))
+{
+    throw new InvalidOperationException(
+        "Missing JWT signing key. Set JWT_SIGNING_KEY via User Secrets or environment variable.");
+}
+
 builder.Services.AddControllers();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<IPasswordHasher<AuthUser>, PasswordHasher<AuthUser>>();
 
 
 // Swagger/OpenAPI
@@ -56,6 +87,7 @@ app.UseHttpsRedirection();
 //Enables cross-origin Resource Sharing
 app.UseCors("AllowReact");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
