@@ -1,4 +1,5 @@
 import type { CartItem, CartSnapshot } from '../types/cart';
+import { getValidAccessToken } from './authStorage';
 
 const API_BASE_URL = '/api';
 const BACKEND_BASE_URL =
@@ -52,9 +53,14 @@ async function requestCart(
   init?: RequestInit,
 ): Promise<CartSnapshot> {
   const headers = new Headers(init?.headers);
+  const accessToken = getValidAccessToken();
 
   if (sessionId) {
     headers.set(SESSION_HEADER_NAME, sessionId);
+  }
+
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(input, {

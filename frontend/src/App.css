@@ -90,6 +90,37 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.navbar-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.navbar-auth-button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tan);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.navbar-auth-button:hover {
+  color: var(--warm-white);
+  border-color: rgba(201, 185, 154, 0.5);
+}
+
+.navbar-auth-button:focus-visible {
+  outline: 2px solid var(--tan);
+  outline-offset: 3px;
+}
 
 /* ── Main Content ── */
 .main-content {
@@ -414,6 +445,12 @@ body {
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .navbar-tagline { display: none; }
+  .navbar { padding: 0 1rem; }
+  .navbar-inner { height: 64px; gap: 0.5rem; }
+  .navbar-logo-text { font-size: 1.1rem; }
+  .navbar-actions { gap: 0.55rem; }
+  .navbar-auth-button,
+  .cartButton { font-size: 0.82rem; }
   .listing-grid { grid-template-columns: 1fr; }
   .detail-image-wrapper { height: 220px; }
   .detail-price { font-size: 1.6rem; }

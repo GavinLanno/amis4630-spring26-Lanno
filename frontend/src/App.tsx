@@ -6,7 +6,9 @@ import Navbar from './components/Navbar';
 import ListingsPage from './pages/ListingsPage';
 import ListingDetailPage from './pages/Listingdetailpage.tsx';
 import CartPage from './pages/CartPage';
+import AuthPage from './pages/AuthPage';
 import { CartProvider } from './contexts/CartContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { fetchListings } from './services/listingsService';
 
 function App() {
@@ -31,21 +33,26 @@ function App() {
   if (error)   return <div className="status-screen error">{error}</div>;
 
   return (
-    <CartProvider>
-      <div className="app">
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<ListingsPage listings={listings} />} />
-            <Route path="/home" element={<Navigate to="/" replace />} />
-            <Route path="/listings" element={<Navigate to="/" replace />} />
-            <Route path="/listings/:id" element={<ListingDetailPage listings={listings} />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <div className="app">
+          <Navbar />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<ListingsPage listings={listings} />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
+              <Route path="/listings" element={<Navigate to="/" replace />} />
+              <Route path="/listings/:id" element={<ListingDetailPage listings={listings} />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/login" element={<Navigate to="/auth" replace />} />
+              <Route path="/register" element={<Navigate to="/auth" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

@@ -412,6 +412,7 @@ export function CartProvider({ children }: CartProviderProps) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCartContext(): CartContextValue {
   const context = useContext(CartContext);
 
