@@ -9,6 +9,7 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -17,9 +18,9 @@ namespace HelloWorldApi.Controllers;
 
 [ApiController]
 [Route("api/cart")]
+[Authorize]
 public class CartController : ControllerBase
 {
-    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "default-user";
     private readonly ListingContext _context;
 
     public CartController(ListingContext context)
@@ -30,7 +31,17 @@ public class CartController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<CartDto>> GetCart()
     {
-        var cart = await GetCartWithItemsAsync();
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity is required."
+            });
+        }
+
+        var cart = await GetCartWithItemsAsync(userId);
 
         if (cart is null)
         {
@@ -43,6 +54,16 @@ public class CartController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CartDto>> AddToCart(AddToCartDto request)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity is required."
+            });
+        }
+
         if (request.Quantity <= 0)
         {
             return BadRequest(new ProblemDetails
@@ -69,13 +90,13 @@ public class CartController : ControllerBase
 
         var cart = await _context.Carts
             .Include(item => item.CartItems)
-            .FirstOrDefaultAsync(item => item.UserId == CurrentUserId);
+            .FirstOrDefaultAsync(item => item.UserId == userId);
 
         if (cart is null)
         {
             cart = new Cart
             {
-                UserId = CurrentUserId,
+                UserId = userId,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -96,7 +117,7 @@ public class CartController : ControllerBase
                 Quantity = request.Quantity
             });
         }
-        else
+        else if (existingCartItem is not null)
         {
             existingCartItem.Quantity += request.Quantity;
             existingCartItem.CategoryId = listing.CategoryId;
@@ -104,7 +125,7 @@ public class CartController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync();
+        var updatedCart = await GetCartWithItemsAsync(userId);
 
         var response = MapCart(updatedCart!);
 
@@ -119,6 +140,16 @@ public class CartController : ControllerBase
     [HttpPut("{cartItemId:int}")]
     public async Task<ActionResult<CartDto>> UpdateCartItem(int cartItemId, UpdateCartItemDto request)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity is required."
+            });
+        }
+
         if (request.Quantity <= 0)
         {
             return BadRequest(new ProblemDetails
@@ -131,7 +162,7 @@ public class CartController : ControllerBase
 
         var cartItem = await _context.CartItems
             .Include(item => item.Cart)
-            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == CurrentUserId);
+            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == userId);
 
         if (cartItem is null)
         {
@@ -147,7 +178,7 @@ public class CartController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync();
+        var updatedCart = await GetCartWithItemsAsync(userId);
 
         return Ok(MapCart(updatedCart!));
     }
@@ -155,9 +186,19 @@ public class CartController : ControllerBase
     [HttpDelete("{cartItemId:int}")]
     public async Task<ActionResult<CartDto>> RemoveCartItem(int cartItemId)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity is required."
+            });
+        }
+
         var cartItem = await _context.CartItems
             .Include(item => item.Cart)
-            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == CurrentUserId);
+            .FirstOrDefaultAsync(item => item.Id == cartItemId && item.Cart.UserId == userId);
 
         if (cartItem is null)
         {
@@ -172,7 +213,7 @@ public class CartController : ControllerBase
         _context.CartItems.Remove(cartItem);
         await _context.SaveChangesAsync();
 
-        var updatedCart = await GetCartWithItemsAsync();
+        var updatedCart = await GetCartWithItemsAsync(userId);
 
         if (updatedCart is null)
         {
@@ -185,9 +226,19 @@ public class CartController : ControllerBase
     [HttpDelete("clear")]
     public async Task<ActionResult<CartDto>> ClearCart()
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = "A valid user identity is required."
+            });
+        }
+
         var cart = await _context.Carts
             .Include(item => item.CartItems)
-            .FirstOrDefaultAsync(item => item.UserId == CurrentUserId);
+            .FirstOrDefaultAsync(item => item.UserId == userId);
 
         if (cart is null)
         {
@@ -203,13 +254,27 @@ public class CartController : ControllerBase
         });
     }
 
-    private Task<Cart?> GetCartWithItemsAsync()
+    private bool TryGetCurrentUserId(out string userId)
+    {
+        var claimValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(claimValue))
+        {
+            userId = string.Empty;
+            return false;
+        }
+
+        userId = claimValue;
+        return true;
+    }
+
+    private Task<Cart?> GetCartWithItemsAsync(string userId)
     {
         return _context.Carts
             .Include(item => item.CartItems)
             .ThenInclude(item => item.Listing)
             .ThenInclude(item => item.Category)
-            .FirstOrDefaultAsync(item => item.UserId == CurrentUserId);
+            .FirstOrDefaultAsync(item => item.UserId == userId);
     }
 
     private static CartDto MapCart(Cart cart)

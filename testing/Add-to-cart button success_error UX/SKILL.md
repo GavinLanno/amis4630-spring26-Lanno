@@ -1,5 +1,6 @@
-# Add-to-cart button success/error UX
-
+---
+Title: Add-to-cart button success/error UX
+---
 ## Intent
 Create resilient frontend unit tests for Add-to-cart button behavior, with exact user-visible feedback for loading, success, and failure states.
 
