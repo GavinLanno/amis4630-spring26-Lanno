@@ -7,9 +7,9 @@
 
 # 🏘️ Buckeye Sublease
 
-Buckeye Sublease is a two-sided digital marketplace that connects students and landlords seeking to list leases or subleases with individuals searching for short-term or flexible housing.
+Buckeye Sublease is a two-sided digital marketplace that connects students and landlords listing leases or subleases with individuals searching for short-term or flexible housing.
 
-This milestone focused on building out the **full-stack integration between the React frontend and the ASP.NET backend API.**
+This milestone focused on building out the **full-stack integration between the React frontend and the ASP.NET backend API**.
 
 ---
 
@@ -75,7 +75,7 @@ Users (Browser)
 
 Frontend ↔ Backend — Request Lifecycle
 
-1. User loads the app → React mounts and App.tsx calls fetch("https://localhost:7000/api/listings")
+1. User loads the app → React mounts and requests listings from `https://localhost:7000/api/listings`
 2. Browser checks CORS — request is cross-origin (port 5173 → 7000), so ASP.NET must respond with the correct Access-Control-Allow-Origin header via the "AllowReact" policy
 3. ListingsController receives the request and returns the full listings array as JSON with a 200 OK
 4. React stores the response in state and passes the listings array down as props to ListingsPage and ListingDetailPage
@@ -175,35 +175,35 @@ erDiagram
 
 ### ADR 1 — Frontend
 
-**Context:** I need a frontend application to build a component based housing marketplace with Typescript, page routing support, and widely used in the industry.
+**Context:** I need a frontend application to build a component-based housing marketplace with TypeScript, page routing support, and broad industry usage.
 
-**Options Considered:** Angular is typically used for large-scale enterprices applications, is less flexible, and has a harder learning curve than react.  Vue is more traditional focusing on HTML, and has a smaller and niche community.
+**Options Considered:** Angular is typically used for large-scale enterprise applications, is less flexible for this use case, and has a steeper learning curve than React. Vue is more template-first and has a smaller niche community.
 
 **Decision:** React with TypeScript
 
-**Reasoning:** React has highly reuseable UI componenets (listing cards, profiles), is widely used, open-sourced, and backed by Meta. It also has an easy learning curve.
+**Reasoning:** React has highly reusable UI components (listing cards, profiles), is widely used, open source, and backed by Meta. It also has an approachable learning curve.
 
-**Consequences:**  React has less built-in features than angular, and the archetecture is less structured which could make it slightly more difficult to manage a larger variety of files.
+**Consequences:** React has fewer built-in features than Angular, and the architecture is less prescriptive, which can make larger projects harder to organize without strong conventions.
 
 ---
 
 ### ADR 2 — Backend
 
-**Context:** I need a backend application that connects to react, is widely used in the industry, can be integrated into azure, can serve REST API endpoints, and can be applied to a varitey of different application types (Websites, business dashboards, complex calculations, etc)
+**Context:** I need a backend application that connects to React, is widely used in the industry, integrates with Azure, serves REST API endpoints, and supports a variety of application types (websites, business dashboards, complex calculations, etc.).
 
-**Options Considered:** Django uses python which is interpreted and dynamically typed, it slows down at a larger scale, and it has a steep learning curve.
+**Options Considered:** Django uses Python, which is interpreted and dynamically typed. For this project, it was considered less aligned with performance and tooling goals at larger scale and had a steeper learning curve.
 
 **Decision:** ASP.NET with C#
 
-**Reasoning** ASP.Net uses C# which helps catch errors during complie time, its flexible across application types, it has built in database access, maintained by Microsoft, widely used in the industry, and smoothly integrates with Azure.
+**Reasoning:** ASP.NET uses C#, which helps catch errors during compile time. It is flexible across application types, has built-in database access, is maintained by Microsoft, is widely used in the industry, and integrates smoothly with Azure.
 
-**Consequences:** ASP.Net has a heavier setup time than other alternatives, however C# reduces runtime errors and the structured project conventions make the codebase easier to navigate as it grows.
+**Consequences:** ASP.NET has a heavier setup than some alternatives. However, C# reduces runtime errors, and structured project conventions make the codebase easier to navigate as it grows.
 
 ---
 
 # 📦 Component Architecture
 
-This section decomposes the property listing UI using **Atomic Design Methodology**.
+This section decomposes the property listing UI using **Atomic Design methodology**.
 
 ## Atoms
 
@@ -277,7 +277,7 @@ If I wanted to create a migration what should I put in the terminal?
 ### Personal Judgment
 
 - Kept `Category` as a string on the original `Listing.cs` until confirming a separate `Category.cs` model already existed
-- Maintained real estate domain naming (`Listing`, `Address`, `SellerName`) rather than adopting marketplace naming (`Product`, `Name`)
+- Maintained real-estate domain naming (`Listing`, `Address`, `SellerName`) rather than adopting marketplace naming (`Product`, `Name`)
 - Reviewed `CartController.cs` independently before submitting rather than having AI write it from scratch
 
 ---
@@ -291,7 +291,7 @@ If I wanted to create a migration what should I put in the terminal?
   2. Add listings to the cart
   3. Refresh the browser — cart reloads from the API
   4. Restart the frontend — cart persists via backend
-  5. Restart the backend — cart resets (expected with in-memory DB, resolved in M5 with SQL Server)
+  5. Restart the backend — cart resets (expected with in-memory DB, to be resolved in M5 with SQL Server)
 
 ---
 
