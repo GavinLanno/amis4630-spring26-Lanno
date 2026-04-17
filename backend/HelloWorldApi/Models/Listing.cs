@@ -17,4 +17,5 @@ public class Listing
     public string SellerName { get; set; } = string.Empty;
     public DateTime PostedDate { get; set; }
     public string ImageURL { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
 }

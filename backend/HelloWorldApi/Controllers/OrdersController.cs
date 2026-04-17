@@ -1,6 +1,7 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,22 @@ public class OrdersController : ControllerBase
 {
     private const string InitialOrderStatus = "Placed";
     private readonly ListingContext _context;
+    private readonly IValidator<UpdateOrderStatusRequestDto> _updateOrderStatusValidator;
+    private static readonly string[] AllowedStatuses =
+    [
+        "Placed",
+        "Processing",
+        "Shipped",
+        "Delivered",
+        "Cancelled"
+    ];
 
-    public OrdersController(ListingContext context)
+    public OrdersController(
+        ListingContext context,
+        IValidator<UpdateOrderStatusRequestDto> updateOrderStatusValidator)
     {
         _context = context;
+        _updateOrderStatusValidator = updateOrderStatusValidator;
     }
 
     [HttpPost]
@@ -153,6 +166,64 @@ public class OrdersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet]
+    [Authorize(Policy = "AdminOnly")]
+    [ProducesResponseType(typeof(List<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<List<OrderDto>>> GetAllOrders()
+    {
+        var orders = await _context.Orders
+            .Include(item => item.OrderItems)
+            .OrderByDescending(item => item.OrderDateUtc)
+            .ToListAsync();
+
+        var response = orders.Select(MapOrder).ToList();
+
+        return Ok(response);
+    }
+
+    [HttpPut("{orderId:int}/status")]
+    [Authorize(Policy = "AdminOnly")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OrderDto>> UpdateOrderStatus(int orderId, UpdateOrderStatusRequestDto request)
+    {
+        var validationResult = await _updateOrderStatusValidator.ValidateAsync(request);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid status update request",
+                Detail = string.Join(" ", validationResult.Errors.Select(item => item.ErrorMessage))
+            });
+        }
+
+        var order = await _context.Orders
+            .Include(item => item.OrderItems)
+            .FirstOrDefaultAsync(item => item.Id == orderId);
+
+        if (order is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Order not found",
+                Detail = $"Order with ID {orderId} was not found."
+            });
+        }
+
+        order.Status = NormalizeStatus(request.Status);
+        await _context.SaveChangesAsync();
+
+        return Ok(MapOrder(order));
+    }
+
     private static string BuildShippingAddress(PlaceOrderRequestDto request)
     {
         return string.Join(", ",
@@ -168,6 +239,14 @@ public class OrdersController : ControllerBase
     private static string BuildConfirmationNumber(int orderId, DateTime orderDateUtc)
     {
         return $"BSL-{orderDateUtc:yyyyMMddHHmmss}-{orderId:D6}";
+    }
+
+    private static string NormalizeStatus(string status)
+    {
+        var matchedStatus = AllowedStatuses.First(item =>
+            string.Equals(item, status, StringComparison.OrdinalIgnoreCase));
+
+        return matchedStatus;
     }
 
     private static OrderDto MapOrder(Order order)

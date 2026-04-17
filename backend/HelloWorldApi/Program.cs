@@ -48,6 +48,9 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IPasswordHasher<AuthUser>, PasswordHasher<AuthUser>>();
 builder.Services.AddScoped<IPasswordHasher<RefreshToken>, PasswordHasher<RefreshToken>>();
 builder.Services.AddScoped<FluentValidation.IValidator<RegisterRequestDto>, RegisterRequestValidator>();
+builder.Services.AddScoped<FluentValidation.IValidator<UpdateOrderStatusRequestDto>, UpdateOrderStatusValidator>();
+builder.Services.AddScoped<FluentValidation.IValidator<CreateListingRequestDto>, CreateListingRequestValidator>();
+builder.Services.AddScoped<FluentValidation.IValidator<UpdateListingRequestDto>, UpdateListingRequestValidator>();
 
 
 // Swagger/OpenAPI
