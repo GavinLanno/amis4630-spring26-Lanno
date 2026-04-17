@@ -7,8 +7,10 @@ import ListingsPage from './pages/ListingsPage';
 import ListingDetailPage from './pages/Listingdetailpage.tsx';
 import CartPage from './pages/CartPage';
 import AuthPage from './pages/AuthPage';
+import AdminPage from './pages/AdminPage';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { fetchListings } from './services/listingsService';
 
 function App() {
@@ -44,6 +46,14 @@ function App() {
               <Route path="/listings" element={<Navigate to="/" replace />} />
               <Route path="/listings/:id" element={<ListingDetailPage listings={listings} />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route
+                path="/admin"
+                element={(
+                  <ProtectedRoute requiredRole="Admin">
+                    <AdminPage />
+                  </ProtectedRoute>
+                )}
+              />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/register" element={<Navigate to="/auth" replace />} />

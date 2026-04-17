@@ -23,12 +23,14 @@ describe('authReducer', () => {
         accessToken: 'token-123',
         expiresAtUtc: '2030-01-01T00:00:00.000Z',
         userId: 'buckeye-user',
+        role: 'User',
       },
     });
 
     expect(result.accessToken).toBe('token-123');
     expect(result.expiresAtUtc).toBe('2030-01-01T00:00:00.000Z');
     expect(result.userId).toBe('buckeye-user');
+    expect(result.role).toBe('User');
     expect(result.isAuthenticated).toBe(true);
     expect(result.isLoading).toBe(false);
     expect(result.errorMessage).toBe('');
@@ -41,6 +43,7 @@ describe('authReducer', () => {
       isAuthenticated: true,
       accessToken: 'existing-token',
       userId: 'existing-user',
+      role: 'Admin',
     };
 
     const result = authReducer(state, {
@@ -54,6 +57,7 @@ describe('authReducer', () => {
     expect(result.isAuthenticated).toBe(true);
     expect(result.accessToken).toBe('existing-token');
     expect(result.userId).toBe('existing-user');
+    expect(result.role).toBe('Admin');
     expect(result.errorMessage).toBe('Invalid credentials');
   });
 
@@ -62,6 +66,7 @@ describe('authReducer', () => {
       accessToken: 'token-123',
       expiresAtUtc: '2030-01-01T00:00:00.000Z',
       userId: 'buckeye-user',
+      role: 'User',
       isAuthenticated: true,
       isLoading: false,
       errorMessage: '',

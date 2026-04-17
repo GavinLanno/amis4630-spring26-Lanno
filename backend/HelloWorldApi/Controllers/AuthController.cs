@@ -77,7 +77,7 @@ public class AuthController : ControllerBase
         {
             UserId = request.UserId,
             Email = request.Email,
-            Role = request.Role
+            Role = NormalizeRole(request.Role)
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -237,5 +237,14 @@ public class AuthController : ControllerBase
         refreshToken.TokenHash = _refreshTokenHasher.HashPassword(refreshToken, plainTextToken);
 
         return (refreshToken, plainTextToken);
+    }
+
+    private static string NormalizeRole(string role)
+    {
+        return role.Trim().ToLowerInvariant() switch
+        {
+            "admin" => "Admin",
+            _ => "User"
+        };
     }
 }

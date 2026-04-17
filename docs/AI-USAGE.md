@@ -148,3 +148,107 @@ Manual browser checks:
 - Add component-level tests for AuthPage interactions (mode toggle and form submission UX).
 - Consider protecting selected routes once auth requirements are finalized.
 - Decide long-term token storage strategy and session expiration UX.
+
+---
+
+# AI Usage Log: Backend Auth Deliverables Implementation
+
+Date: 2026-04-16
+Scope: Close backend auth rubric gaps (login route, validation, seeded admin, refresh tokens).
+
+## Request Summary
+
+The user asked to verify auth deliverables, mark missing items, create a plan, then start implementation.
+
+## Gaps Identified Before Coding
+
+- Missing POST /api/auth/login endpoint (only /api/auth/token existed).
+- Missing password policy enforcement (min 8, uppercase, digit).
+- Missing email format validation.
+- No persistent seeded admin user (auth users were in-memory).
+- No refresh token mechanism.
+
+## What Was Implemented
+
+### 1) Login Route Compatibility
+
+- Added login route alias to the token issuance action.
+- Existing /api/auth/token behavior preserved for compatibility.
+
+Primary file:
+- backend/HelloWorldApi/Controllers/AuthController.cs
+
+### 2) Registration Validation
+
+- Added FluentValidation-based validator for register payload.
+- Enforced:
+	- valid email format
+	- password minimum length 8
+	- at least one uppercase
+	- at least one digit
+- Integrated validator into registration flow with ProblemDetails 400 output.
+
+Primary files:
+- backend/HelloWorldApi/Validators/RegisterRequestValidator.cs
+- backend/HelloWorldApi/DTOs/RegisterRequestDto.cs
+- backend/HelloWorldApi/Controllers/AuthController.cs
+- backend/HelloWorldApi/Program.cs
+
+### 3) Persistent Auth Users + Seeded Admin
+
+- Replaced in-memory auth store with EF-backed AuthUsers table.
+- Added startup seeding for one local admin user:
+	- UserId: admin
+	- Email: admin@buckeye.local
+	- Password: AdminPass1
+	- Role: Admin
+- Added race-safe seed handling for parallel startup in tests.
+
+Primary files:
+- backend/HelloWorldApi/Models/AuthUser.cs
+- backend/HelloWorldApi/Data/LisitngContext.cs
+- backend/HelloWorldApi/Program.cs
+
+### 4) Refresh Token Mechanism
+
+- Added RefreshToken entity and DB table.
+- Issued refresh token on login/token creation.
+- Added POST /api/auth/refresh with token rotation.
+- Added JWT jti claim to ensure refreshed access tokens are distinct.
+
+Primary files:
+- backend/HelloWorldApi/Models/RefreshToken.cs
+- backend/HelloWorldApi/DTOs/RefreshTokenRequestDto.cs
+- backend/HelloWorldApi/DTOs/TokenResponseDto.cs
+- backend/HelloWorldApi/Controllers/AuthController.cs
+- backend/HelloWorldApi/Data/LisitngContext.cs
+
+### 5) Schema and Test Updates
+
+- Added migration for AuthUsers and RefreshTokens:
+	- 20260416063818_AddAuthUsersAndRefreshTokens
+- Added/updated unit and integration tests for:
+	- email/password validation
+	- login route + seeded admin login
+	- refresh token rotation and reuse rejection
+- Updated integration test factory to use isolated temp SQLite DB.
+
+Primary files:
+- backend/HelloWorldApi/Migrations/20260416063818_AddAuthUsersAndRefreshTokens.cs
+- backend/HelloWorldApi.Tests/Unit/AuthControllerTests.cs
+- backend/HelloWorldApi.Tests/Integration/AuthIntegrationTests.cs
+- backend/HelloWorldApi.Tests/Integration/TestApiFactory.cs
+
+## Validation Evidence
+
+Command run:
+- dotnet test workshop-4-lab.sln
+
+Result:
+- Passed (12 total, 12 passed, 0 failed)
+
+## Notes and Constraints Encountered
+
+- EF migration generation initially failed due to file lock on HelloWorldApi.exe; resolved by stopping the lingering process.
+- sqlite3 CLI was not available in this environment for direct DB querying.
+- Local admin seed exists in startup logic; direct manual DB verification command was skipped by user in-session.

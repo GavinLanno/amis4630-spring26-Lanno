@@ -13,6 +13,7 @@ function isValidSessionShape(value: unknown): value is AuthSession {
     typeof record.accessToken === 'string'
     && typeof record.expiresAtUtc === 'string'
     && typeof record.userId === 'string'
+    && (record.role === 'User' || record.role === 'Admin')
   );
 }
 

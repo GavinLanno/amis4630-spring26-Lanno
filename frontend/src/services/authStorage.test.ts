@@ -17,12 +17,14 @@ describe('authStorage', () => {
       accessToken: 'access-123',
       expiresAtUtc: '2030-01-01T00:00:00.000Z',
       userId: 'buckeye-user',
+      role: 'User',
     });
 
     expect(readStoredAuthSession()).toEqual({
       accessToken: 'access-123',
       expiresAtUtc: '2030-01-01T00:00:00.000Z',
       userId: 'buckeye-user',
+      role: 'User',
     });
   });
 
@@ -54,6 +56,7 @@ describe('authStorage', () => {
       accessToken: 'future-token',
       expiresAtUtc: new Date(Date.now() + 60_000).toISOString(),
       userId: 'future-user',
+      role: 'User',
     });
 
     expect(getValidAccessToken()).toBe('future-token');
@@ -64,6 +67,7 @@ describe('authStorage', () => {
       accessToken: 'expired-token',
       expiresAtUtc: new Date(Date.now() - 60_000).toISOString(),
       userId: 'expired-user',
+      role: 'User',
     });
 
     expect(getValidAccessToken()).toBeNull();
@@ -81,6 +85,7 @@ describe('authStorage', () => {
       accessToken: 'token',
       expiresAtUtc: '2030-01-01T00:00:00.000Z',
       userId: 'user',
+      role: 'User',
     });
 
     clearStoredAuthSession();

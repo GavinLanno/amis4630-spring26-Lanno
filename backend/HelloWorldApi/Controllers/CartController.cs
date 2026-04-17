@@ -9,6 +9,7 @@
 using HelloWorldApi.Data;
 using HelloWorldApi.DTOs;
 using HelloWorldApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -133,6 +134,7 @@ public class CartController : ControllerBase
     }
 
     [HttpPut("{cartItemId:int}")]
+    [Authorize]
     public async Task<ActionResult<CartDto>> UpdateCartItem(int cartItemId, UpdateCartItemDto request)
     {
         var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);
@@ -193,6 +195,7 @@ public class CartController : ControllerBase
     }
 
     [HttpDelete("{cartItemId:int}")]
+    [Authorize]
     public async Task<ActionResult<CartDto>> RemoveCartItem(int cartItemId)
     {
         var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);
@@ -247,6 +250,7 @@ public class CartController : ControllerBase
     }
 
     [HttpDelete("clear")]
+    [Authorize]
     public async Task<ActionResult<CartDto>> ClearCart()
     {
         var identity = await ResolveCartIdentityAsync(allowCreateGuestSession: false);

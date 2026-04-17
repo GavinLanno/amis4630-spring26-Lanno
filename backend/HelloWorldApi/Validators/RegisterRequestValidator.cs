@@ -31,6 +31,9 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequestDto>
 
         RuleFor(request => request.Role)
             .NotEmpty()
-            .WithMessage("Role is required.");
+            .WithMessage("Role is required.")
+            .Must(role => string.Equals(role, "User", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Role must be either User or Admin.");
     }
 }

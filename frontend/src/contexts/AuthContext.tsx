@@ -15,9 +15,11 @@ import {
   persistAuthSession,
   readStoredAuthSession,
 } from '../services/authStorage';
-import type { AuthState } from '../types/auth';
+import type { AuthSession, AuthState } from '../types/auth';
 
-const DEFAULT_REGISTER_ROLE = 'user';
+const DEFAULT_REGISTER_ROLE = 'User';
+const NAME_IDENTIFIER_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 interface LoginInput {
   userId: string;
@@ -43,20 +45,81 @@ interface AuthProviderProps {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function decodeJwtPayload(accessToken: string): Record<string, unknown> {
+  const tokenParts = accessToken.split('.');
+
+  if (tokenParts.length < 2) {
+    throw new Error('Authentication token format is invalid.');
+  }
+
+  const payloadSegment = tokenParts[1];
+  const base64 = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+  const paddedBase64 = `${base64}${'='.repeat((4 - (base64.length % 4)) % 4)}`;
+  const json = atob(paddedBase64);
+
+  return JSON.parse(json) as Record<string, unknown>;
+}
+
+function normalizeRole(rawRole: unknown): AuthSession['role'] {
+  if (typeof rawRole !== 'string') {
+    throw new Error('Authentication token is missing a valid role claim.');
+  }
+
+  const normalizedRole = rawRole.trim().toLowerCase();
+
+  if (normalizedRole === 'admin') {
+    return 'Admin';
+  }
+
+  if (normalizedRole === 'user') {
+    return 'User';
+  }
+
+  throw new Error('Authentication token contains an unsupported role claim.');
+}
+
+function buildAuthSession(accessToken: string, expiresAtUtc: string, fallbackUserId: string): AuthSession {
+  const payload = decodeJwtPayload(accessToken);
+  const claimUserId = payload[NAME_IDENTIFIER_CLAIM];
+  const claimRole = payload[ROLE_CLAIM] ?? payload.role;
+
+  return {
+    accessToken,
+    expiresAtUtc,
+    userId: typeof claimUserId === 'string' && claimUserId.trim().length > 0 ? claimUserId : fallbackUserId,
+    role: normalizeRole(claimRole),
+  };
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
   useEffect(() => {
-    const session = readStoredAuthSession();
+    const storedSession = readStoredAuthSession();
 
-    if (!session) {
+    if (!storedSession) {
       return;
     }
 
-    if (isSessionExpired(session.expiresAtUtc)) {
+    if (isSessionExpired(storedSession.expiresAtUtc)) {
       clearStoredAuthSession();
       return;
     }
+
+    let session: AuthSession;
+
+    try {
+      session = buildAuthSession(
+        storedSession.accessToken,
+        storedSession.expiresAtUtc,
+        storedSession.userId,
+      );
+    } catch {
+      clearStoredAuthSession();
+      return;
+    }
+
+    persistAuthSession(session);
 
     dispatch({
       type: 'RESTORE_SESSION',
@@ -73,11 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password,
       });
 
-      const session = {
-        accessToken: result.accessToken,
-        expiresAtUtc: result.expiresAtUtc,
-        userId,
-      };
+      const session = buildAuthSession(result.accessToken, result.expiresAtUtc, userId);
 
       persistAuthSession(session);
 

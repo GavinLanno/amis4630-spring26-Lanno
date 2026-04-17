@@ -1,0 +1,17 @@
+.page {
+  margin: 0 auto;
+  width: min(880px, 100%);
+  padding: 2rem 1.5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  color: #1f2937;
+}
+
+.message {
+  margin-top: 0.85rem;
+  color: #4b5563;
+  font-size: 1rem;
+}

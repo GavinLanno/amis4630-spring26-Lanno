@@ -2,12 +2,14 @@ export interface AuthSession {
   accessToken: string;
   expiresAtUtc: string;
   userId: string;
+  role: 'User' | 'Admin';
 }
 
 export interface AuthState {
   accessToken: string | null;
   expiresAtUtc: string | null;
   userId: string | null;
+  role: 'User' | 'Admin' | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   errorMessage: string;
