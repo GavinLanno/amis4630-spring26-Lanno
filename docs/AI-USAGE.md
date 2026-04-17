@@ -497,3 +497,49 @@ Result summary:
 - EF migration generation initially hit a file-lock on HelloWorldApi.exe; resolved by stopping the running process, then re-running migration + tests.
 - Workspace DB artifacts changed during runs (local SQLite files); code implementation proceeded without altering credential behavior.
 - Admin credentials were not changed.
+
+---
+
+# AI Usage Log: Frontend Testing Deliverables Verification and Minimal Fixes
+
+Date: 2026-04-17
+Scope: Verify rubric testing deliverables and implement only missing frontend tests.
+
+## Verification Outcome
+
+- Present: Vitest + React Testing Library setup, auth reducer tests, CI-style test script (`vitest run`).
+- Missing before changes: dedicated form-validation helper unit test and Login-form empty-submit error test.
+
+## Minimal Implementation
+
+- Extracted checkout validation into `frontend/src/pages/checkoutValidation.ts`.
+- Added helper unit tests in `frontend/src/pages/checkoutValidation.test.ts`.
+- Added Auth page component test in `frontend/src/pages/AuthPage.test.tsx` to assert empty-submit shows `User ID is required.`
+- Updated `frontend/src/pages/CheckoutPage.tsx` to reuse helper without behavior changes.
+
+## Validation Evidence
+
+- Command: `npm test` (frontend)
+- Result: pass, 11 files and 36 tests passing.
+
+---
+
+# AI Usage Log: Backend Test Deliverables Verification + Minimal Fix
+
+Date: 2026-04-17  
+Scope: Milestone 6 automated backend testing requirements.
+
+## Request Summary
+
+User asked to verify required backend tests, mark pass/fail, and implement minimal fixes for any missing items.
+
+## Changes Implemented
+
+- Added one pure logic unit test in `backend/HelloWorldApi.Tests/Unit/CartPricingTests.cs` (`CartDto_CartTotal_WithNoItems_IsZero`) to satisfy minimum pure-unit count.
+- Updated test host configuration in `backend/HelloWorldApi.Tests/Integration/TestApiFactory.cs` to enable in-memory DB mode via config.
+- Added safe app toggle in `backend/HelloWorldApi/Program.cs` (`UseInMemoryDatabase`) to use EF InMemory + `EnsureCreated` during tests, while preserving SQLite + migrations by default.
+
+## Validation Evidence
+
+- `dotnet test workshop-4-lab.sln`: pass after stopping locked `HelloWorldApi.exe`.
+- Integration suite: 18/18 passed.
