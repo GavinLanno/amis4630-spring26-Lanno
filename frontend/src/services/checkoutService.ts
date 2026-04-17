@@ -1,4 +1,5 @@
 import { getValidAccessToken } from './authStorage';
+import { apiRequest } from './apiRequest';
 
 const API_BASE_URL = '/api';
 
@@ -36,11 +37,8 @@ export async function submitCheckout(): Promise<string> {
     throw new Error('Please log in before checkout.');
   }
 
-  const response = await fetch(`${API_BASE_URL}/checkout`, {
+  const response = await apiRequest(`${API_BASE_URL}/checkout`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
 
   if (!response.ok) {

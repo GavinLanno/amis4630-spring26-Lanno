@@ -15,6 +15,15 @@ function Navbar() {
         </div>
         <div className="navbar-tagline">Premium Real Estate For Buckeyes</div>
         <div className="navbar-actions">
+          {state.isAuthenticated ? (
+            <Link
+              to="/orders"
+              className="navbar-auth-button"
+              aria-label="Open your order history"
+            >
+              Orders
+            </Link>
+          ) : null}
           {state.role === 'Admin' ? (
             <Link
               to="/admin"

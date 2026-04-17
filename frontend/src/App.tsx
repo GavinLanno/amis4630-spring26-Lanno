@@ -6,6 +6,9 @@ import Navbar from './components/Navbar';
 import ListingsPage from './pages/ListingsPage';
 import ListingDetailPage from './pages/Listingdetailpage.tsx';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderConfirmationPage from './pages/OrderConfirmationPage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
 import AuthPage from './pages/AuthPage';
 import AdminPage from './pages/AdminPage';
 import { CartProvider } from './contexts/CartContext';
@@ -46,6 +49,30 @@ function App() {
               <Route path="/listings" element={<Navigate to="/" replace />} />
               <Route path="/listings/:id" element={<ListingDetailPage listings={listings} />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route
+                path="/checkout"
+                element={(
+                  <ProtectedRoute>
+                    <CheckoutPage />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/orders"
+                element={(
+                  <ProtectedRoute>
+                    <OrderHistoryPage />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/orders/confirmation/:id"
+                element={(
+                  <ProtectedRoute>
+                    <OrderConfirmationPage />
+                  </ProtectedRoute>
+                )}
+              />
               <Route
                 path="/admin"
                 element={(

@@ -8,4 +8,5 @@ public class AuthUser
     public string Role { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

@@ -21,6 +21,8 @@ public class ListingContext : DbContext
     public DbSet<GuestSession> GuestSessions { get; set; }
     public DbSet<AuthUser> AuthUsers { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +43,24 @@ public class ListingContext : DbContext
             .WithMany(user => user.RefreshTokens)
             .HasForeignKey(token => token.AuthUserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(order => order.AuthUser)
+            .WithMany(user => user.Orders)
+            .HasForeignKey(order => order.AuthUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Order>()
+            .HasIndex(order => order.AuthUserId);
+
+        modelBuilder.Entity<OrderItem>()
+            .HasOne(orderItem => orderItem.Order)
+            .WithMany(order => order.OrderItems)
+            .HasForeignKey(orderItem => orderItem.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OrderItem>()
+            .HasIndex(orderItem => orderItem.OrderId);
 
         modelBuilder.Entity<GuestSession>()
             .HasIndex(item => item.SessionId)

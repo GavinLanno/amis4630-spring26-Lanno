@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartContext } from '../contexts/CartContext';
 import { useAuthContext } from '../contexts/AuthContext';
-import { submitCheckout } from '../services/checkoutService';
 import styles from './CartPage.module.css';
 
 function formatCurrency(amount: number): string {
@@ -24,7 +22,6 @@ function CartPage() {
     removeItem,
     updateQuantity,
   } = useCartContext();
-  const [checkoutMessage, setCheckoutMessage] = useState('');
 
   function handleQuantityChange(listingId: number, quantity: number) {
     const nextQuantity = Math.min(99, Math.max(1, quantity));
@@ -40,24 +37,13 @@ function CartPage() {
     void clearCart();
   }
 
-  async function handleCheckout() {
+  function handleCheckout() {
     if (!authState.isAuthenticated) {
       navigate('/auth');
       return;
     }
 
-    try {
-      const message = await submitCheckout();
-      setCheckoutMessage(message);
-      clearError();
-    } catch (error) {
-      if (error instanceof Error) {
-        setCheckoutMessage(error.message);
-        return;
-      }
-
-      setCheckoutMessage('Checkout failed. Please try again.');
-    }
+    navigate('/checkout');
   }
 
   if (state.isLoading) {
@@ -216,26 +202,13 @@ function CartPage() {
             <button
               type="button"
               className={styles.checkoutButton}
-              onClick={() => {
-                void handleCheckout();
-              }}
+              onClick={handleCheckout}
               aria-label="Proceed to checkout"
             >
               {authState.isAuthenticated ? 'Proceed to Checkout' : 'Login to Checkout'}
             </button>
           </div>
         </div>
-      </section>
-
-      <section id="checkout" className={styles.checkoutPlaceholder}>
-        <h2 className={styles.checkoutTitle}>Checkout</h2>
-        {checkoutMessage ? (
-          <p className={styles.checkoutMessage}>{checkoutMessage}</p>
-        ) : (
-          <p className={styles.checkoutMessage}>
-            Checkout form coming in Part 5.
-          </p>
-        )}
       </section>
     </div>
   );
