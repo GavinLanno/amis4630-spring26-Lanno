@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../../contexts/CartContext';
-import styles from './CartBadge.module.css';
 
 export function CartBadge() {
   const { cartItemCount, state } = useCartContext();
@@ -12,7 +11,7 @@ export function CartBadge() {
   return (
     <Link
       to="/cart"
-      className={styles.cartButton}
+      className="navbar-auth-button"
       aria-label={cartLabel}
     >
       Considerations ({state.isLoading ? '...' : cartItemCount})

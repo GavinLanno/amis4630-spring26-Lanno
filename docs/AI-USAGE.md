@@ -375,3 +375,125 @@ Result summary:
 
 - Migration generation required JWT_SIGNING_KEY to be set for startup configuration.
 - Implementation kept ownership checks claim-scoped to prevent BOLA risk on history endpoint.
+
+---
+
+# AI Usage Log: Basic Admin Features Verification and Implementation
+
+Date: 2026-04-17
+Scope: Verify rubric deliverables for admin features, create a fix plan, and implement missing backend + frontend capabilities.
+
+## Request Summary
+
+The user requested:
+- Verification of admin deliverables with pass/fail markers.
+- A plan to fix missing items.
+- Immediate implementation start.
+- Preserve existing admin credentials (admin / AdminPass1).
+
+## Verification Outcome (Before Coding)
+
+Checked deliverables:
+- Admin dashboard accessible only to Admin role: present.
+- Product management through UI (add, edit, delete): missing.
+- View all orders with status (admin only): missing.
+- PUT /api/orders/{orderId}/status (admin only): missing.
+
+Credential check:
+- Confirmed admin seed defaults remained admin / AdminPass1.
+
+## Product Decisions Confirmed During Chat
+
+- Allowed order statuses for admin updates:
+	- Placed
+	- Processing
+	- Shipped
+	- Delivered
+	- Cancelled
+- Product API path choice: use /api/listings endpoints with Admin authorization checks.
+- Delete behavior choice: soft delete listings.
+
+## What Was Implemented
+
+### 1) Backend: Order Admin Features
+
+- Added admin-only GET /api/orders to view all orders with status.
+- Added admin-only PUT /api/orders/{orderId}/status for status updates.
+- Added request contract and validator for status updates.
+
+Primary files:
+- backend/HelloWorldApi/Controllers/OrdersController.cs
+- backend/HelloWorldApi/DTOs/UpdateOrderStatusRequestDto.cs
+- backend/HelloWorldApi/Validators/UpdateOrderStatusValidator.cs
+
+### 2) Backend: Product Management (Admin)
+
+- Added admin-only listing mutation endpoints on /api/listings:
+	- POST /api/listings
+	- PUT /api/listings/{id}
+	- DELETE /api/listings/{id}
+- Implemented soft delete using IsActive flag.
+- Updated public listing reads to return only active listings.
+- Added create/update listing DTOs and validators.
+
+Primary files:
+- backend/HelloWorldApi/Controllers/ListingsController.cs
+- backend/HelloWorldApi/Models/Listing.cs
+- backend/HelloWorldApi/DTOs/CreateListingRequestDto.cs
+- backend/HelloWorldApi/DTOs/UpdateListingRequestDto.cs
+- backend/HelloWorldApi/Validators/CreateListingRequestValidator.cs
+- backend/HelloWorldApi/Validators/UpdateListingRequestValidator.cs
+
+### 3) Backend: Migration and DI Wiring
+
+- Added EF migration for Listing.IsActive soft delete support.
+- Registered new FluentValidation validators.
+
+Primary files:
+- backend/HelloWorldApi/Migrations/20260417044019_AddListingSoftDeleteIsActive.cs
+- backend/HelloWorldApi/Migrations/20260417044019_AddListingSoftDeleteIsActive.Designer.cs
+- backend/HelloWorldApi/Migrations/ListingContextModelSnapshot.cs
+- backend/HelloWorldApi/Program.cs
+
+### 4) Frontend: Admin Dashboard Features
+
+- Replaced placeholder Admin page with a working dashboard.
+- Added product management UI:
+	- create listing
+	- edit listing
+	- soft delete listing
+- Added all-orders admin UI with status update controls.
+- Added admin service layer and admin types.
+
+Primary files:
+- frontend/src/pages/AdminPage.tsx
+- frontend/src/pages/AdminPage.module.css
+- frontend/src/services/adminService.ts
+- frontend/src/types/admin.ts
+
+### 5) Test Coverage Added
+
+- Added backend integration tests for admin feature behavior and authorization.
+- Added frontend service tests for admin API mapping and actions.
+
+Primary files:
+- backend/HelloWorldApi.Tests/Integration/AdminFeaturesIntegrationTests.cs
+- frontend/src/services/adminService.test.ts
+
+## Validation Evidence
+
+Commands run:
+- dotnet test backend/HelloWorldApi.Tests/HelloWorldApi.Tests.csproj
+- npm run lint (frontend)
+- npm test -- --run (frontend)
+
+Result summary:
+- Backend tests: passed (26 total, 26 passed, 0 failed)
+- Frontend lint: passed
+- Frontend tests: passed (9 files passed, 32 tests passed)
+
+## Notes and Constraints Encountered
+
+- EF migration generation initially hit a file-lock on HelloWorldApi.exe; resolved by stopping the running process, then re-running migration + tests.
+- Workspace DB artifacts changed during runs (local SQLite files); code implementation proceeded without altering credential behavior.
+- Admin credentials were not changed.

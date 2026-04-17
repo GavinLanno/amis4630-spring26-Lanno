@@ -9,10 +9,14 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <div className="navbar-logo">
+        <Link
+          to="/"
+          className="navbar-logo"
+          aria-label="Go to the home page"
+        >
           <span className="navbar-logo-icon">Home</span>
           <span className="navbar-logo-text">Buckeye Sublease</span>
-        </div>
+        </Link>
         <div className="navbar-tagline">Premium Real Estate For Buckeyes</div>
         <div className="navbar-actions">
           {state.isAuthenticated ? (
