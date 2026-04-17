@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 var jwtSigningKey = builder.Configuration["JWT_SIGNING_KEY"];
+var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
 if (string.IsNullOrWhiteSpace(jwtSigningKey))
 {
@@ -68,14 +69,30 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<ListingContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (useInMemoryDatabase)
+    {
+        opt.UseInMemoryDatabase("hello-world-api-tests");
+        return;
+    }
+
+    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ListingContext>();
-    db.Database.Migrate();
+
+    if (useInMemoryDatabase)
+    {
+        db.Database.EnsureCreated();
+    }
+    else
+    {
+        db.Database.Migrate();
+    }
 
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AuthUser>>();
     var adminUserId = builder.Configuration["ADMIN_SEED_USER_ID"] ?? "admin";

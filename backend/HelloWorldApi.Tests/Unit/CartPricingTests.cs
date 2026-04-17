@@ -30,4 +30,15 @@ public class CartPricingTests
 
         Assert.Equal(299.95m, cart.CartTotal);
     }
+
+    [Fact]
+    public void CartDto_CartTotal_WithNoItems_IsZero()
+    {
+        var cart = new CartDto
+        {
+            CartItems = []
+        };
+
+        Assert.Equal(0m, cart.CartTotal);
+    }
 }
