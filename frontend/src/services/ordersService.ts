@@ -9,6 +9,14 @@ interface ProblemDetails {
   title?: string;
 }
 
+const fallbackMessagesByStatus: Record<number, string> = {
+  401: 'Please log in before placing your order.',
+  403: 'Your session is authenticated but not authorized for order placement. Please log in again.',
+  404: 'Order endpoint not found. Restart the backend so the latest API routes are loaded.',
+  405: 'Order endpoint is unavailable for this action. Verify the backend is running the latest build.',
+  500: 'The server failed while placing your order. Please try again.',
+};
+
 interface OrderItemResponse {
   id: number;
   listingId: number;
@@ -56,18 +64,21 @@ function mapOrder(order: OrderResponse): Order {
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
-  try {
-    const data = (await response.json()) as ProblemDetails;
+  const fallbackMessage = fallbackMessagesByStatus[response.status] ?? 'Order request failed.';
 
-    if (response.status === 401) {
-      return 'Please log in before placing your order.';
+  try {
+    const contentType = response.headers.get('content-type') ?? '';
+
+    if (!contentType.includes('json')) {
+      const textPayload = (await response.text()).trim();
+      return textPayload.length > 0 ? textPayload : fallbackMessage;
     }
+
+    const data = (await response.json()) as ProblemDetails;
 
     return data.detail ?? data.title ?? 'Order request failed.';
   } catch {
-    return response.status === 401
-      ? 'Please log in before placing your order.'
-      : 'Order request failed.';
+    return fallbackMessage;
   }
 }
 

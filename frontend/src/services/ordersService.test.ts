@@ -71,6 +71,38 @@ describe('ordersService', () => {
     })).rejects.toThrow('Cart is empty');
   });
 
+  it('returns clear message when backend responds 403 without JSON', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 403 }),
+    );
+
+    await expect(placeOrder({
+      fullName: 'Buckeye Buyer',
+      addressLine1: '123 College Ave',
+      city: 'Columbus',
+      stateProvince: 'OH',
+      postalCode: '43210',
+      country: 'USA',
+      phoneNumber: '614-555-1234',
+    })).rejects.toThrow('Your session is authenticated but not authorized for order placement. Please log in again.');
+  });
+
+  it('returns restart hint when backend route is missing', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 404 }),
+    );
+
+    await expect(placeOrder({
+      fullName: 'Buckeye Buyer',
+      addressLine1: '123 College Ave',
+      city: 'Columbus',
+      stateProvince: 'OH',
+      postalCode: '43210',
+      country: 'USA',
+      phoneNumber: '614-555-1234',
+    })).rejects.toThrow('Order endpoint not found. Restart the backend so the latest API routes are loaded.');
+  });
+
   it('maps order history response into frontend shape', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(

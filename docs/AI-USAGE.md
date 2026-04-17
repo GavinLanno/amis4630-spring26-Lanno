@@ -252,3 +252,126 @@ Result:
 - EF migration generation initially failed due to file lock on HelloWorldApi.exe; resolved by stopping the lingering process.
 - sqlite3 CLI was not available in this environment for direct DB querying.
 - Local admin seed exists in startup logic; direct manual DB verification command was skipped by user in-session.
+
+---
+
+# AI Usage Log: Order Placement and History Implementation
+
+Date: 2026-04-17
+Scope: Implement end-to-end order placement from cart, confirmation flow, and authenticated order history.
+
+## Request Summary
+
+The user requested implementation start after planning for:
+- POST /api/orders to place an order from cart.
+- Order and OrderItem persistence with shipping details and totals.
+- Cart clear on successful order placement.
+- Confirmation number generation.
+- Frontend checkout page and order confirmation page.
+- GET /api/orders/mine using JWT subject ownership (no user id in URL).
+
+## Key Decisions Confirmed During Chat
+
+- Initial order status: Placed.
+- Shipping fields: FullName, AddressLine1, City, StateProvince, PostalCode, Country, PhoneNumber.
+- Confirmation number strategy: derived from order id plus timestamp.
+- Checkout UX: dedicated /checkout page plus separate confirmation page.
+- History behavior: include all statuses from backend, default active filter in UI.
+
+## What Was Implemented
+
+### 1) Backend Domain and Data Schema
+
+- Added Order and OrderItem entities.
+- Added AuthUser to Orders relationship.
+- Added DbSet registrations and indexes for Orders and OrderItems.
+- Added migration to create Orders and OrderItems tables.
+
+Primary files:
+- backend/HelloWorldApi/Models/Order.cs
+- backend/HelloWorldApi/Models/OrderItem.cs
+- backend/HelloWorldApi/Models/AuthUser.cs
+- backend/HelloWorldApi/Data/LisitngContext.cs
+- backend/HelloWorldApi/Migrations/20260417035620_AddOrdersAndOrderItems.cs
+
+### 2) Backend API Endpoints
+
+- Added OrdersController.
+- Implemented POST /api/orders:
+	- Resolves user from JWT NameIdentifier claim.
+	- Loads authenticated user cart with items.
+	- Validates non-empty cart.
+	- Snapshots cart items to OrderItems with price and line totals.
+	- Creates order with status and shipping address.
+	- Generates confirmation number after persistence.
+	- Clears cart items in same order placement flow.
+- Implemented GET /api/orders/mine:
+	- Derives user from JWT claim only.
+	- Returns only current user's orders.
+
+Primary files:
+- backend/HelloWorldApi/Controllers/OrdersController.cs
+- backend/HelloWorldApi/DTOs/PlaceOrderRequestDto.cs
+- backend/HelloWorldApi/DTOs/OrderDto.cs
+
+### 3) Frontend Checkout and Order UX
+
+- Updated cart checkout action to route to /checkout.
+- Added checkout page with:
+	- shipping address form
+	- validation and error states
+	- order summary from cart context
+- Added order confirmation page.
+- Added order history page with default active filter and all toggle.
+- Added routes for /checkout, /orders, and /orders/confirmation/:id.
+- Added Orders link in navbar for authenticated users.
+
+Primary files:
+- frontend/src/pages/CartPage.tsx
+- frontend/src/pages/CheckoutPage.tsx
+- frontend/src/pages/CheckoutPage.module.css
+- frontend/src/pages/OrderConfirmationPage.tsx
+- frontend/src/pages/OrderConfirmationPage.module.css
+- frontend/src/pages/OrderHistoryPage.tsx
+- frontend/src/pages/OrderHistoryPage.module.css
+- frontend/src/App.tsx
+- frontend/src/components/Navbar.tsx
+
+### 4) Frontend Service and Types
+
+- Added order types for request/response mapping.
+- Added orders service for:
+	- placeOrder()
+	- fetchMyOrders()
+- Reused authenticated API request pattern for bearer token attachment.
+
+Primary files:
+- frontend/src/types/order.ts
+- frontend/src/services/ordersService.ts
+
+### 5) Test Coverage Added
+
+- Added backend integration tests for order placement and ownership isolation.
+- Added frontend service tests for orders API mapping/error handling.
+- Added frontend checkout page validation test.
+
+Primary files:
+- backend/HelloWorldApi.Tests/Integration/OrdersIntegrationTests.cs
+- frontend/src/services/ordersService.test.ts
+- frontend/src/pages/CheckoutPage.test.tsx
+
+## Validation Evidence
+
+Commands run:
+- dotnet test ../HelloWorldApi.Tests/HelloWorldApi.Tests.csproj (from backend/HelloWorldApi)
+- npm test -- --run (from frontend)
+
+Result summary:
+- Backend tests: passed (22 total, 22 passed, 0 failed)
+- Frontend tests: passed (26 total, 26 passed, 0 failed)
+- Workspace diagnostics: no errors reported for frontend or backend folders
+
+## Notes
+
+- Migration generation required JWT_SIGNING_KEY to be set for startup configuration.
+- Implementation kept ownership checks claim-scoped to prevent BOLA risk on history endpoint.

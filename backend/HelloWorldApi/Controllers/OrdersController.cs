@@ -21,7 +21,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "UserOrAdmin")]
+    [Authorize]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -110,7 +110,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("mine")]
-    [Authorize(Policy = "UserOrAdmin")]
+    [Authorize]
     [ProducesResponseType(typeof(List<OrderDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<List<OrderDto>>> GetMyOrders()
