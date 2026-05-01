@@ -1,9 +1,8 @@
+import { API_BASE_URL, resolveAssetUrl } from '../config';
 import { apiRequest } from './apiRequest';
 import type { Listing } from '../types/Listing';
 import type { ListingInput, OrderStatus } from '../types/admin';
 import type { Order } from '../types/order';
-
-const API_BASE_URL = '/api';
 
 interface ProblemDetails {
   detail?: string;
@@ -51,7 +50,7 @@ function mapListingResponse(listing: ListingResponse): Listing {
     category: listing.categoryName,
     sellerName: listing.sellerName,
     postedDate: listing.postedDate,
-    imageURL: listing.imageURL,
+    imageURL: resolveAssetUrl(listing.imageURL),
   };
 }
 
@@ -67,7 +66,7 @@ function mapOrder(order: OrderResponse): Order {
       id: item.id,
       listingId: item.listingId,
       address: item.address,
-      imageUrl: item.imageURL,
+      imageUrl: resolveAssetUrl(item.imageURL),
       categoryName: item.categoryName,
       price: item.price,
       quantity: item.quantity,

@@ -27,7 +27,7 @@ function ListingDetail({ listing, onBack }: ListingDetailProps) {
 
       <div className="detail-image-wrapper">
         <img
-          src={`https://localhost:7000${listing.imageURL}`}
+          src={listing.imageURL}
           alt={listing.address}
           className="detail-image"
           onError={(e) => {

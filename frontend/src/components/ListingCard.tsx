@@ -24,7 +24,7 @@ function ListingCard({ listing, onClick }: ListingCardProps) {
     <div className="listing-card" onClick={() => onClick(listing.id)}>
       <div className="listing-card-image-wrapper">
         <img
-          src={`https://localhost:7000${listing.imageURL}`}
+          src={listing.imageURL}
           alt={listing.address}
           className="listing-card-image"
           onError={(event) => {
@@ -48,7 +48,7 @@ function ListingCard({ listing, onClick }: ListingCardProps) {
               id: listing.id,
               name: listing.address,
               price: listing.price,
-              imageUrl: `https://localhost:7000${listing.imageURL}`,
+              imageUrl: listing.imageURL,
               categoryName: listing.category,
             }}
           />

@@ -1,9 +1,7 @@
 import type { CartItem, CartSnapshot } from '../types/cart';
+import { API_BASE_URL, resolveAssetUrl } from '../config';
 import { apiRequest } from './apiRequest';
 
-const API_BASE_URL = '/api';
-const BACKEND_BASE_URL =
-  import.meta.env.VITE_BACKEND_BASE_URL ?? 'https://localhost:7000';
 const SESSION_HEADER_NAME = 'X-Session-Id';
 
 interface ProblemDetails {
@@ -73,25 +71,6 @@ async function requestCart(
   return mapCartResponse(data, resolvedSessionId);
 }
 
-function toAbsoluteImageUrl(imageUrl: string): string {
-  if (imageUrl.startsWith('/')) {
-    return imageUrl;
-  }
-
-  try {
-    const parsedImageUrl = new URL(imageUrl);
-    const parsedBackendUrl = new URL(BACKEND_BASE_URL);
-
-    if (parsedImageUrl.origin === parsedBackendUrl.origin) {
-      return `${parsedImageUrl.pathname}${parsedImageUrl.search}`;
-    }
-
-    return imageUrl;
-  } catch {
-    return `${BACKEND_BASE_URL}${imageUrl}`;
-  }
-}
-
 function mapCartItem(item: CartItemResponse): CartItem {
   return {
     id: item.id,
@@ -99,7 +78,7 @@ function mapCartItem(item: CartItemResponse): CartItem {
     listingName: item.address,
     price: item.price,
     quantity: item.quantity,
-    imageUrl: toAbsoluteImageUrl(item.imageURL),
+    imageUrl: resolveAssetUrl(item.imageURL),
     categoryName: item.categoryName,
     lineTotal: item.lineTotal,
   };

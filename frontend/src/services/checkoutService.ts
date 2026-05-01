@@ -1,7 +1,6 @@
+import { API_BASE_URL } from '../config';
 import { getValidAccessToken } from './authStorage';
 import { apiRequest } from './apiRequest';
-
-const API_BASE_URL = '/api';
 
 interface ProblemDetails {
   detail?: string;

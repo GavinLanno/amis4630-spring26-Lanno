@@ -1,8 +1,7 @@
 import type { Order, OrderItem, PlaceOrderInput } from '../types/order';
+import { API_BASE_URL, resolveAssetUrl } from '../config';
 import { apiRequest } from './apiRequest';
 import { getValidAccessToken } from './authStorage';
-
-const API_BASE_URL = '/api';
 
 interface ProblemDetails {
   detail?: string;
@@ -43,7 +42,7 @@ function mapOrderItem(item: OrderItemResponse): OrderItem {
     id: item.id,
     listingId: item.listingId,
     address: item.address,
-    imageUrl: item.imageURL,
+    imageUrl: resolveAssetUrl(item.imageURL),
     categoryName: item.categoryName,
     price: item.price,
     quantity: item.quantity,
