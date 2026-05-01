@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { authReducer, initialAuthState } from './authReducer';
+import type { AuthState } from '../types/auth';
 
 describe('authReducer', () => {
   it('handles START_AUTH_REQUEST by enabling loading and clearing errors', () => {
     const state = {
       ...initialAuthState,
       errorMessage: 'previous error',
-    };
+    } satisfies AuthState;
 
     const result = authReducer(state, {
       type: 'START_AUTH_REQUEST',
@@ -44,7 +45,7 @@ describe('authReducer', () => {
       accessToken: 'existing-token',
       userId: 'existing-user',
       role: 'Admin',
-    };
+    } satisfies AuthState;
 
     const result = authReducer(state, {
       type: 'AUTH_FAILURE',
@@ -70,7 +71,7 @@ describe('authReducer', () => {
       isAuthenticated: true,
       isLoading: false,
       errorMessage: '',
-    };
+    } satisfies AuthState;
 
     const result = authReducer(state, {
       type: 'LOGOUT',
