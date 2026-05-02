@@ -58,14 +58,17 @@ builder.Services.AddScoped<FluentValidation.IValidator<UpdateListingRequestDto>,
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "http://localhost:5173")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
-// Configure CORS to allow React frontend
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReact",
-        policy => policy.WithOrigins("http://localhost:5173")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(corsOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod());
 });
 
 builder.Services.AddDbContext<ListingContext>(opt =>
@@ -149,7 +152,7 @@ app.UseHttpsRedirection();
 
 
 //Enables cross-origin Resource Sharing
-app.UseCors("AllowReact");
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
