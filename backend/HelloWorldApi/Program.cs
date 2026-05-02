@@ -5,6 +5,7 @@ using HelloWorldApi.Models;
 using HelloWorldApi.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -147,6 +148,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "images")),
+    RequestPath = "/images"
+});
 
 app.UseHttpsRedirection();
 

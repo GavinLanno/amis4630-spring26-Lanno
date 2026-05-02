@@ -82,7 +82,7 @@ resource site 'Microsoft.Web/sites@2024-04-01' = {
         }
         {
           name: 'ConnectionStrings__DefaultConnection'
-          value: 'Data Source=/home/BuckeyeMarketplace.db'
+          value: 'Data Source=/home/BuckeyeSublease.db'
         }
         {
           name: 'JWT_SIGNING_KEY'

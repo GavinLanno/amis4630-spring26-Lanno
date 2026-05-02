@@ -27,7 +27,7 @@ HelloWorldApi/
 │   └── ListingsController.cs
 ├── Data/                  # DbContext and seed data
 │   └── LisitngContext.cs
-├── wwwroot/images/listings # Holds images for listings
+├── images/listings         # Holds images for listings
 │   ├── individual photo files
 ├── DTOs/                  # Request/response records
 │   ├── AddToCartDto.cs
