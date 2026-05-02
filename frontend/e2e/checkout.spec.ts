@@ -1,47 +1,26 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  login,
+  placeOrderFromFirstListing,
+  registerUser,
+  snapshotStep,
+  uniqueUserCredentials,
+} from './test-helpers';
 
-function uniqueUserId(): string {
-  return `e2e-user-${Date.now()}`;
-}
-
-async function snapshotStep(page: Page, name: string): Promise<void> {
-  await page.screenshot({
-    path: `test-results/e2e-snapshots/${name}.png`,
-    fullPage: true,
-  });
-}
-
-test('happy path: register, login, browse, cart, checkout, order history', async ({ page }) => {
-  const userId = uniqueUserId();
-  const email = `${userId}@example.com`;
-  const password = 'BuckeyePass1';
-
+test('happy path: register, login, browse, cart, checkout, order history', async ({ page }, testInfo) => {
+  const credentials = uniqueUserCredentials('e2e-user');
   await test.step('1) Register or log in with a valid user', async () => {
-    await page.goto('/auth');
-    await page.getByRole('button', { name: 'Switch to register' }).click();
-
-    await page.getByLabel('User ID').fill(userId);
-    await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(password);
-    await page.getByLabel('Confirm password').fill(password);
-
-    await page.getByRole('button', { name: 'Create a new account' }).click();
-    await expect(page.getByText('Account created. Sign in with your new credentials.')).toBeVisible();
-
-    await page.getByLabel('User ID').fill(userId);
-    await page.getByLabel('Password', { exact: true }).fill(password);
-    await page.getByRole('button', { name: 'Sign in to your account' }).click();
-
-    await expect(page).toHaveURL(/\/$/);
+    await registerUser(page, credentials);
+    await login(page, credentials);
     await expect(page.getByRole('heading', { name: 'Available Properties' })).toBeVisible();
-    await snapshotStep(page, 'step-1-authenticated');
+    await snapshotStep(page, testInfo, 'step-1-authenticated');
   });
 
   await test.step('2) Browse products', async () => {
     const listingCards = page.locator('.listing-card');
     await expect(listingCards.first()).toBeVisible();
     await expect(listingCards).toHaveCount(await listingCards.count());
-    await snapshotStep(page, 'step-2-browse-products');
+    await snapshotStep(page, testInfo, 'step-2-browse-products');
   });
 
   await test.step('3) Add an item to the cart', async () => {
@@ -56,7 +35,7 @@ test('happy path: register, login, browse, cart, checkout, order history', async
     await expect(page).toHaveURL(/\/cart$/);
     await expect(page.getByRole('heading', { name: 'Your Considerations' })).toBeVisible();
     await expect(page.locator('li').first()).toBeVisible();
-    await snapshotStep(page, 'step-3-added-to-cart');
+    await snapshotStep(page, testInfo, 'step-3-added-to-cart');
   });
 
   await test.step('4) Go to checkout and place an order', async () => {
@@ -74,7 +53,7 @@ test('happy path: register, login, browse, cart, checkout, order history', async
 
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page).toHaveURL(/\/orders\/confirmation\//);
-    await snapshotStep(page, 'step-4-checkout-complete');
+    await snapshotStep(page, testInfo, 'step-4-checkout-complete');
   });
 
   let confirmationNumber = '';
@@ -90,7 +69,7 @@ test('happy path: register, login, browse, cart, checkout, order history', async
     expect(match?.[1]?.trim()).toBeTruthy();
     confirmationNumber = match![1].trim();
 
-    await snapshotStep(page, 'step-5-order-confirmation');
+    await snapshotStep(page, testInfo, 'step-5-order-confirmation');
   });
 
   await test.step('6) Verify the order appears in order history', async () => {
@@ -98,6 +77,27 @@ test('happy path: register, login, browse, cart, checkout, order history', async
     await expect(page).toHaveURL(/\/orders$/);
     await expect(page.getByRole('heading', { name: 'My Orders' })).toBeVisible();
     await expect(page.getByText(confirmationNumber)).toBeVisible();
-    await snapshotStep(page, 'step-6-order-history');
+    await snapshotStep(page, testInfo, 'step-6-order-history');
   });
+});
+
+test('mobile viewport: checkout flow remains usable', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), 'Mobile responsiveness is only verified in the mobile project.');
+
+  const credentials = uniqueUserCredentials('mobile-user');
+
+  await registerUser(page, credentials);
+  await login(page, credentials);
+  await page.getByRole('button', { name: /Add .* to cart/i }).first().click();
+  await page.getByRole('link', { name: /Shopping cart/i }).click();
+  await expect(page).toHaveURL(/\/cart$/);
+  await expect(page.getByRole('link', { name: 'Back to listings' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Back to listings' }).click();
+  const confirmationNumber = await placeOrderFromFirstListing(page, testInfo, 'Mobile Tester');
+
+  await page.getByRole('link', { name: 'View Order History' }).click();
+  await expect(page.getByText(confirmationNumber)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show active orders' })).toBeVisible();
+  await snapshotStep(page, testInfo, 'mobile-order-history');
 });

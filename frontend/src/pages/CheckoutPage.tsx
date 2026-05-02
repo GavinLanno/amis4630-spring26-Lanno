@@ -18,6 +18,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { state, cartTotal, clearCart } = useCartContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedOrderId, setSubmittedOrderId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [form, setForm] = useState<PlaceOrderInput>({
     fullName: '',
@@ -29,7 +30,7 @@ function CheckoutPage() {
     phoneNumber: '',
   });
 
-  if (state.items.length === 0) {
+  if (state.items.length === 0 && submittedOrderId === null) {
     return <Navigate to="/cart" replace />;
   }
 
@@ -67,7 +68,7 @@ function CheckoutPage() {
         phoneNumber: form.phoneNumber.trim(),
       });
 
-      await clearCart();
+      setSubmittedOrderId(order.id);
 
       navigate(`/orders/confirmation/${order.id}`, {
         replace: true,
@@ -75,6 +76,8 @@ function CheckoutPage() {
           order,
         },
       });
+
+      void clearCart();
     } catch (error) {
       setErrorMessage(
         error instanceof Error
