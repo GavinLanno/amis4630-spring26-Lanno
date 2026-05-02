@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
 
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    env:
-      API_PROJECT: backend/HelloWorldApi/HelloWorldApi.csproj
-      API_TEST_PROJECT: backend/HelloWorldApi.Tests/HelloWorldApi.Tests.csproj
-      PUBLISH_OUTPUT: ${{ github.workspace }}/api-publish
     steps:
       - uses: actions/checkout@v4
 
@@ -18,23 +18,20 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore
-        run: dotnet restore ${{ env.API_PROJECT }}
-
       - name: Build
-        run: dotnet build ${{ env.API_PROJECT }} --configuration Release --no-restore
+        run: dotnet build HelloWorldApi/HelloWorldApi.csproj --configuration Release
 
       - name: Test
-        run: dotnet test ${{ env.API_TEST_PROJECT }} --no-build --configuration Release
+        run: dotnet test HelloWorldApi.Tests/HelloWorldApi.Tests.csproj --no-build --configuration Release
         continue-on-error: true # remove once you have tests
 
       - name: Publish
-        run: dotnet publish ${{ env.API_PROJECT }} -c Release --no-build -o ${{ env.PUBLISH_OUTPUT }}
+        run: dotnet publish HelloWorldApi/HelloWorldApi.csproj -c Release -o ./output
 
       - uses: actions/upload-artifact@v4
         with:
           name: api
-          path: ${{ env.PUBLISH_OUTPUT }}
+          path: backend/output
 
   deploy:
     needs: build-and-test

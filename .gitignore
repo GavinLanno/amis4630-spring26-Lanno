@@ -30,6 +30,8 @@ bld/
 # Build folder
 */obj/
 */bin/
+*/publish/
+*.zip
 
 # Dependencies
 node_modules/

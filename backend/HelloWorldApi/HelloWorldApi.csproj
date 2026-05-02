@@ -27,6 +27,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="publish\**\*" />
+    <Content Remove="deploy.zip" />
+    <None Remove="publish\**\*" />
+    <None Remove="deploy.zip" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="images\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
