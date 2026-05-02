@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+using var startupLoggerFactory = LoggerFactory.Create(logging => logging.AddSimpleConsole());
+var startupLogger = startupLoggerFactory.CreateLogger("Startup");
 
 // Add services to the container.
 
@@ -19,6 +21,7 @@ var useInMemoryDatabase = builder.Configuration.GetValue<bool>("UseInMemoryDatab
 
 if (string.IsNullOrWhiteSpace(jwtSigningKey))
 {
+    startupLogger.LogCritical("Application startup failed: JWT_SIGNING_KEY is missing.");
     throw new InvalidOperationException(
         "Missing JWT signing key. Set JWT_SIGNING_KEY via User Secrets or environment variable.");
 }
@@ -59,7 +62,11 @@ builder.Services.AddScoped<FluentValidation.IValidator<UpdateListingRequestDto>,
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "http://localhost:5173")
+var defaultCorsOrigins = string.Join(',',
+    "http://localhost:5173",
+    "https://agreeable-cliff-0d1ba470f.7.azurestaticapps.net");
+
+var corsOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? defaultCorsOrigins)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
@@ -85,53 +92,70 @@ builder.Services.AddDbContext<ListingContext>(opt =>
 
 var app = builder.Build();
 
+app.Logger.LogInformation(
+    "Application starting. Environment={Environment}; UseInMemoryDatabase={UseInMemoryDatabase}; CorsOrigins={CorsOrigins}",
+    app.Environment.EnvironmentName,
+    useInMemoryDatabase,
+    string.Join(",", corsOrigins));
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ListingContext>();
-
-    if (useInMemoryDatabase)
+    try
     {
-        db.Database.EnsureCreated();
-    }
-    else
-    {
-        db.Database.Migrate();
-    }
+        var db = scope.ServiceProvider.GetRequiredService<ListingContext>();
 
-    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AuthUser>>();
-    var adminUserId = builder.Configuration["ADMIN_SEED_USER_ID"] ?? "admin";
-    var adminEmail = builder.Configuration["ADMIN_SEED_EMAIL"] ?? "admin@buckeye.local";
-    var adminPassword = builder.Configuration["ADMIN_SEED_PASSWORD"] ?? "AdminPass1";
-
-    var adminAlreadyExists = db.AuthUsers.Any(user => user.UserId == adminUserId || user.Email == adminEmail);
-
-    if (!adminAlreadyExists)
-    {
-        var adminUser = new AuthUser
+        if (useInMemoryDatabase)
         {
-            UserId = adminUserId,
-            Email = adminEmail,
-            Role = "Admin"
-        };
-
-        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminPassword);
-
-        db.AuthUsers.Add(adminUser);
-
-        try
-        {
-            db.SaveChanges();
+            db.Database.EnsureCreated();
+            app.Logger.LogInformation("In-memory database created successfully.");
         }
-        catch (DbUpdateException)
+        else
         {
-            var seedCompletedByAnotherProcess = db.AuthUsers.Any(user =>
-                user.UserId == adminUserId || user.Email == adminEmail);
+            db.Database.Migrate();
+            app.Logger.LogInformation("Database migrations applied successfully.");
+        }
 
-            if (!seedCompletedByAnotherProcess)
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AuthUser>>();
+        var adminUserId = builder.Configuration["ADMIN_SEED_USER_ID"] ?? "admin";
+        var adminEmail = builder.Configuration["ADMIN_SEED_EMAIL"] ?? "admin@buckeye.local";
+        var adminPassword = builder.Configuration["ADMIN_SEED_PASSWORD"] ?? "AdminPass1";
+
+        var adminAlreadyExists = db.AuthUsers.Any(user => user.UserId == adminUserId || user.Email == adminEmail);
+
+        if (!adminAlreadyExists)
+        {
+            var adminUser = new AuthUser
             {
-                throw;
+                UserId = adminUserId,
+                Email = adminEmail,
+                Role = "Admin"
+            };
+
+            adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminPassword);
+
+            db.AuthUsers.Add(adminUser);
+
+            try
+            {
+                db.SaveChanges();
+                app.Logger.LogInformation("Admin seed user created successfully.");
+            }
+            catch (DbUpdateException)
+            {
+                var seedCompletedByAnotherProcess = db.AuthUsers.Any(user =>
+                    user.UserId == adminUserId || user.Email == adminEmail);
+
+                if (!seedCompletedByAnotherProcess)
+                {
+                    throw;
+                }
             }
         }
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogCritical(exception, "Application startup failed during database initialization or seed.");
+        throw;
     }
 }
 
