@@ -192,6 +192,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/", () => Results.Ok(new { status = "Healthy" }));
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
 app.MapControllers();
